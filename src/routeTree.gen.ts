@@ -14,8 +14,11 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BrowseRouteImport } from './routes/browse'
 import { Route as CartRouteImport } from './routes/cart'
 import { Route as CheckoutRouteImport } from './routes/checkout'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as WishlistRouteImport } from './routes/wishlist'
 import { Route as OrdersIdRouteImport } from './routes/orders.$id'
 import { Route as ProductIdRouteImport } from './routes/product.$id'
 
@@ -44,6 +47,16 @@ const CheckoutRoute = CheckoutRouteImport.update({
   path: '/checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OrdersRoute = OrdersRouteImport.update({
   id: '/orders',
   path: '/orders',
@@ -52,6 +65,11 @@ const OrdersRoute = OrdersRouteImport.update({
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WishlistRoute = WishlistRouteImport.update({
+  id: '/wishlist',
+  path: '/wishlist',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OrdersIdRoute = OrdersIdRouteImport.update({
@@ -71,8 +89,11 @@ export interface FileRoutesByFullPath {
   '/browse': typeof BrowseRoute
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
+  '/dashboard': typeof DashboardRoute
+  '/notifications': typeof NotificationsRoute
   '/orders': typeof OrdersRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
+  '/wishlist': typeof WishlistRoute
   '/orders/$id': typeof OrdersIdRoute
   '/product/$id': typeof ProductIdRoute
 }
@@ -82,8 +103,11 @@ export interface FileRoutesByTo {
   '/browse': typeof BrowseRoute
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
+  '/dashboard': typeof DashboardRoute
+  '/notifications': typeof NotificationsRoute
   '/orders': typeof OrdersRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
+  '/wishlist': typeof WishlistRoute
   '/orders/$id': typeof OrdersIdRoute
   '/product/$id': typeof ProductIdRoute
 }
@@ -94,8 +118,11 @@ export interface FileRoutesById {
   '/browse': typeof BrowseRoute
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
+  '/dashboard': typeof DashboardRoute
+  '/notifications': typeof NotificationsRoute
   '/orders': typeof OrdersRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
+  '/wishlist': typeof WishlistRoute
   '/orders/$id': typeof OrdersIdRoute
   '/product/$id': typeof ProductIdRoute
 }
@@ -107,8 +134,11 @@ export interface FileRouteTypes {
     | '/browse'
     | '/cart'
     | '/checkout'
+    | '/dashboard'
+    | '/notifications'
     | '/orders'
     | '/reset-password'
+    | '/wishlist'
     | '/orders/$id'
     | '/product/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -118,8 +148,11 @@ export interface FileRouteTypes {
     | '/browse'
     | '/cart'
     | '/checkout'
+    | '/dashboard'
+    | '/notifications'
     | '/orders'
     | '/reset-password'
+    | '/wishlist'
     | '/orders/$id'
     | '/product/$id'
   id:
@@ -129,8 +162,11 @@ export interface FileRouteTypes {
     | '/browse'
     | '/cart'
     | '/checkout'
+    | '/dashboard'
+    | '/notifications'
     | '/orders'
     | '/reset-password'
+    | '/wishlist'
     | '/orders/$id'
     | '/product/$id'
   fileRoutesById: FileRoutesById
@@ -141,8 +177,11 @@ export interface RootRouteChildren {
   BrowseRoute: typeof BrowseRoute
   CartRoute: typeof CartRoute
   CheckoutRoute: typeof CheckoutRoute
+  DashboardRoute: typeof DashboardRoute
+  NotificationsRoute: typeof NotificationsRoute
   OrdersRoute: typeof OrdersRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
+  WishlistRoute: typeof WishlistRoute
   ProductIdRoute: typeof ProductIdRoute
 }
 
@@ -183,6 +222,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/orders': {
       id: '/orders'
       path: '/orders'
@@ -195,6 +248,13 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/wishlist': {
+      id: '/wishlist'
+      path: '/wishlist'
+      fullPath: '/wishlist'
+      preLoaderRoute: typeof WishlistRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/orders/$id': {
@@ -231,8 +291,11 @@ const rootRouteChildren: RootRouteChildren = {
   BrowseRoute: BrowseRoute,
   CartRoute: CartRoute,
   CheckoutRoute: CheckoutRoute,
+  DashboardRoute: DashboardRoute,
+  NotificationsRoute: NotificationsRoute,
   OrdersRoute: OrdersRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
+  WishlistRoute: WishlistRoute,
   ProductIdRoute: ProductIdRoute,
 }
 export const routeTree = rootRouteImport
