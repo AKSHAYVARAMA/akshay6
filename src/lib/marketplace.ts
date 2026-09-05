@@ -36,13 +36,13 @@ export async function fetchCategories(): Promise<Category[]> {
 }
 
 export interface ProductFilters {
-  search?: string;
-  categoryId?: string | null;
-  condition?: "new" | "used" | null;
-  maxPrice?: number | null;
-  featured?: boolean;
-  limit?: number;
-  sort?: "newest" | "price_asc" | "price_desc";
+  search?: string | undefined;
+  categoryId?: string | null | undefined;
+  condition?: "new" | "used" | null | undefined;
+  maxPrice?: number | null | undefined;
+  featured?: boolean | undefined;
+  limit?: number | undefined;
+  sort?: "newest" | "price_asc" | "price_desc" | undefined;
 }
 
 export async function fetchProducts(filters: ProductFilters = {}): Promise<Product[]> {
