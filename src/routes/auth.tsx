@@ -42,18 +42,18 @@ function AuthPage() {
 
   const signIn = async () => {
     const parsed = credentials.safeParse({ email, password });
-    if (!parsed.success) return toast.error(parsed.error.issues[0]?.message ?? "Invalid details");
+    if (!parsed.success) { toast.error(parsed.error.issues[0]?.message ?? "Invalid details"); return; }
     setBusy(true);
     const { error } = await supabase.auth.signInWithPassword({ email: parsed.data.email, password: parsed.data.password });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Welcome back!");
     void navigate({ to: "/dashboard" });
   };
 
   const signUp = async () => {
     const parsed = credentials.safeParse({ email, password });
-    if (!parsed.success) return toast.error(parsed.error.issues[0]?.message ?? "Invalid details");
+    if (!parsed.success) { toast.error(parsed.error.issues[0]?.message ?? "Invalid details"); return; }
     setBusy(true);
     const { data, error } = await supabase.auth.signUp({
       email: parsed.data.email,
@@ -61,24 +61,24 @@ function AuthPage() {
       options: { emailRedirectTo: window.location.origin, data: { full_name: fullName.trim() } },
     });
     setBusy(false);
-    if (error) return toast.error(error.message);
-    if (!data.session) return toast.success("Check your email to confirm your account.");
+    if (error) { toast.error(error.message); return; }
+    if (!data.session) { toast.success("Check your email to confirm your account."); return; }
     void navigate({ to: "/dashboard" });
   };
 
   const google = async () => {
     const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
-    if (result.error) return toast.error("Google sign-in failed. Please try again.");
-    if (result.redirected) return;
+    if (result.error) { toast.error("Google sign-in failed. Please try again."); return; }
+    if (result.redirected) { return; }
     void navigate({ to: "/dashboard" });
   };
 
   const resetPassword = async () => {
-    if (!email) return toast.error("Enter your email address first.");
+    if (!email) { toast.error("Enter your email address first."); return; }
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
       redirectTo: `${window.location.origin}/reset-password`,
     });
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Password reset link sent.");
   };
 

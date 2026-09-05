@@ -25,9 +25,9 @@ function ResetPassword() {
   const navigate = useNavigate();
 
   const submit = async () => {
-    if (password.length < 8) return toast.error("Password must be at least 8 characters.");
+    if (password.length < 8) { toast.error("Password must be at least 8 characters."); return; }
     const { error } = await supabase.auth.updateUser({ password });
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Password updated.");
     void navigate({ to: "/dashboard" });
   };

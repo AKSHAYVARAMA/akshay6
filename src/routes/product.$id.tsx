@@ -137,7 +137,7 @@ function ProductPage() {
   });
 
   const saveWishlist = async () => {
-    if (!user) return toast.error("Sign in to save items.");
+    if (!user) { toast.error("Sign in to save items."); return; }
     await supabase.from("wishlists").upsert({ user_id: user.id, product_id: id }, { onConflict: "user_id,product_id" });
     toast.success("Saved to wishlist");
   };

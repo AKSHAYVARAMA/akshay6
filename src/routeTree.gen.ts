@@ -14,13 +14,16 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BrowseRouteImport } from './routes/browse'
 import { Route as CartRouteImport } from './routes/cart'
 import { Route as CheckoutRouteImport } from './routes/checkout'
+import { Route as CompareRouteImport } from './routes/compare'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as WishlistRouteImport } from './routes/wishlist'
+import { Route as ListingsNewRouteImport } from './routes/listings.new'
 import { Route as OrdersIdRouteImport } from './routes/orders.$id'
 import { Route as ProductIdRouteImport } from './routes/product.$id'
+import { Route as ListingsIdEditRouteImport } from './routes/listings.$id.edit'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -45,6 +48,11 @@ const CartRoute = CartRouteImport.update({
 const CheckoutRoute = CheckoutRouteImport.update({
   id: '/checkout',
   path: '/checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompareRoute = CompareRouteImport.update({
+  id: '/compare',
+  path: '/compare',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -72,6 +80,11 @@ const WishlistRoute = WishlistRouteImport.update({
   path: '/wishlist',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ListingsNewRoute = ListingsNewRouteImport.update({
+  id: '/listings/new',
+  path: '/listings/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OrdersIdRoute = OrdersIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -82,6 +95,11 @@ const ProductIdRoute = ProductIdRouteImport.update({
   path: '/product/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ListingsIdEditRoute = ListingsIdEditRouteImport.update({
+  id: '/listings/$id/edit',
+  path: '/listings/$id/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -89,13 +107,16 @@ export interface FileRoutesByFullPath {
   '/browse': typeof BrowseRoute
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
+  '/compare': typeof CompareRoute
   '/dashboard': typeof DashboardRoute
   '/notifications': typeof NotificationsRoute
   '/orders': typeof OrdersRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/wishlist': typeof WishlistRoute
+  '/listings/new': typeof ListingsNewRoute
   '/orders/$id': typeof OrdersIdRoute
   '/product/$id': typeof ProductIdRoute
+  '/listings/$id/edit': typeof ListingsIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -103,13 +124,16 @@ export interface FileRoutesByTo {
   '/browse': typeof BrowseRoute
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
+  '/compare': typeof CompareRoute
   '/dashboard': typeof DashboardRoute
   '/notifications': typeof NotificationsRoute
   '/orders': typeof OrdersRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/wishlist': typeof WishlistRoute
+  '/listings/new': typeof ListingsNewRoute
   '/orders/$id': typeof OrdersIdRoute
   '/product/$id': typeof ProductIdRoute
+  '/listings/$id/edit': typeof ListingsIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -118,13 +142,16 @@ export interface FileRoutesById {
   '/browse': typeof BrowseRoute
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
+  '/compare': typeof CompareRoute
   '/dashboard': typeof DashboardRoute
   '/notifications': typeof NotificationsRoute
   '/orders': typeof OrdersRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/wishlist': typeof WishlistRoute
+  '/listings/new': typeof ListingsNewRoute
   '/orders/$id': typeof OrdersIdRoute
   '/product/$id': typeof ProductIdRoute
+  '/listings/$id/edit': typeof ListingsIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -134,13 +161,16 @@ export interface FileRouteTypes {
     | '/browse'
     | '/cart'
     | '/checkout'
+    | '/compare'
     | '/dashboard'
     | '/notifications'
     | '/orders'
     | '/reset-password'
     | '/wishlist'
+    | '/listings/new'
     | '/orders/$id'
     | '/product/$id'
+    | '/listings/$id/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -148,13 +178,16 @@ export interface FileRouteTypes {
     | '/browse'
     | '/cart'
     | '/checkout'
+    | '/compare'
     | '/dashboard'
     | '/notifications'
     | '/orders'
     | '/reset-password'
     | '/wishlist'
+    | '/listings/new'
     | '/orders/$id'
     | '/product/$id'
+    | '/listings/$id/edit'
   id:
     | '__root__'
     | '/'
@@ -162,13 +195,16 @@ export interface FileRouteTypes {
     | '/browse'
     | '/cart'
     | '/checkout'
+    | '/compare'
     | '/dashboard'
     | '/notifications'
     | '/orders'
     | '/reset-password'
     | '/wishlist'
+    | '/listings/new'
     | '/orders/$id'
     | '/product/$id'
+    | '/listings/$id/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -177,12 +213,15 @@ export interface RootRouteChildren {
   BrowseRoute: typeof BrowseRoute
   CartRoute: typeof CartRoute
   CheckoutRoute: typeof CheckoutRoute
+  CompareRoute: typeof CompareRoute
   DashboardRoute: typeof DashboardRoute
   NotificationsRoute: typeof NotificationsRoute
   OrdersRoute: typeof OrdersRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
   WishlistRoute: typeof WishlistRoute
+  ListingsNewRoute: typeof ListingsNewRoute
   ProductIdRoute: typeof ProductIdRoute
+  ListingsIdEditRoute: typeof ListingsIdEditRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -222,6 +261,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/compare': {
+      id: '/compare'
+      path: '/compare'
+      fullPath: '/compare'
+      preLoaderRoute: typeof CompareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
@@ -257,6 +303,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WishlistRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/listings/new': {
+      id: '/listings/new'
+      path: '/listings/new'
+      fullPath: '/listings/new'
+      preLoaderRoute: typeof ListingsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/orders/$id': {
       id: '/orders/$id'
       path: '/$id'
@@ -269,6 +322,13 @@ declare module '@tanstack/react-router' {
       path: '/product/$id'
       fullPath: '/product/$id'
       preLoaderRoute: typeof ProductIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/listings/$id/edit': {
+      id: '/listings/$id/edit'
+      path: '/listings/$id/edit'
+      fullPath: '/listings/$id/edit'
+      preLoaderRoute: typeof ListingsIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -291,12 +351,15 @@ const rootRouteChildren: RootRouteChildren = {
   BrowseRoute: BrowseRoute,
   CartRoute: CartRoute,
   CheckoutRoute: CheckoutRoute,
+  CompareRoute: CompareRoute,
   DashboardRoute: DashboardRoute,
   NotificationsRoute: NotificationsRoute,
   OrdersRoute: OrdersRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
   WishlistRoute: WishlistRoute,
+  ListingsNewRoute: ListingsNewRoute,
   ProductIdRoute: ProductIdRoute,
+  ListingsIdEditRoute: ListingsIdEditRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
