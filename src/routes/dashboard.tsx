@@ -13,15 +13,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { currency, type Product } from "@/lib/marketplace";
+import { money, type Product } from "@/lib/marketplace";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
-      { title: "Your dashboard — ReMarket" },
-      { name: "description", content: "Manage your ReMarket profile, orders, listings, wishlist and notifications." },
-      { property: "og:title", content: "Your dashboard — ReMarket" },
-      { property: "og:description", content: "Manage your ReMarket profile, orders, listings and wishlist." },
+      { title: "Your account — ReMarket" },
+      { name: "description", content: "Manage your ReMarket profile, listings, favourites and notifications." },
+      { property: "og:title", content: "Your account — ReMarket" },
+      { property: "og:description", content: "Manage your ReMarket profile, listings and favourites." },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -53,19 +53,6 @@ function Dashboard() {
     store_name: profile?.store_name ?? "",
     bio: profile?.bio ?? "",
     avatar_url: profile?.avatar_url ?? "",
-  });
-
-  const { data: orders = [] } = useQuery({
-    queryKey: ["orders", user?.id],
-    enabled: !!user,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("orders")
-        .select("id, total, status, created_at")
-        .eq("buyer_id", user!.id)
-        .order("created_at", { ascending: false });
-      return data ?? [];
-    },
   });
 
   const { data: listings = [] } = useQuery({
@@ -136,9 +123,8 @@ function Dashboard() {
       <Tabs defaultValue="profile" className="mt-8">
         <TabsList className="flex flex-wrap">
           <TabsTrigger value="profile">My profile</TabsTrigger>
-          <TabsTrigger value="orders">My orders</TabsTrigger>
           <TabsTrigger value="listings">My listings</TabsTrigger>
-          <TabsTrigger value="wishlist">Wishlist</TabsTrigger>
+          <TabsTrigger value="wishlist">Favourites</TabsTrigger>
           <TabsTrigger value="recent">Recently viewed</TabsTrigger>
         </TabsList>
 
@@ -189,31 +175,15 @@ function Dashboard() {
           </div>
         </TabsContent>
 
-        <TabsContent value="orders" className="mt-6 space-y-3">
-          {orders.map((order) => (
-            <Link
-              key={order.id}
-              to="/orders/$id"
-              params={{ id: order.id }}
-              className="glass-panel flex items-center justify-between rounded-3xl p-5"
-            >
-              <span className="font-display text-lg">#{order.id.slice(0, 8)}</span>
-              <span className="rounded-full bg-secondary px-3 py-1 text-xs uppercase">{order.status}</span>
-              <span className="font-display text-lg text-primary">{currency(Number(order.total))}</span>
-            </Link>
-          ))}
-          {orders.length === 0 && <p className="text-muted-foreground">No purchases yet.</p>}
-        </TabsContent>
-
         <TabsContent value="listings" className="mt-6 space-y-3">
           <Button asChild className="sunset-gradient rounded-full border-0 text-primary-foreground">
-            <Link to="/listings/new">List a new item</Link>
+            <Link to="/listings/new">Post an ad</Link>
           </Button>
           {listings.map((listing) => (
             <div key={listing.id} className="glass-panel flex flex-wrap items-center justify-between gap-3 rounded-3xl p-5">
               <span className="font-display text-lg">{listing.title}</span>
-              <span className="rounded-full bg-secondary px-3 py-1 text-xs uppercase">{listing.status}</span>
-              <span className="text-primary">{currency(Number(listing.price))}</span>
+              <span className="rounded-full bg-secondary px-3 py-1 text-xs uppercase">{listing.condition}</span>
+              <span className="text-primary">{money(Number(listing.price), listing.currency)}</span>
               <Button asChild size="sm" variant="secondary" className="rounded-full">
                 <Link to="/listings/$id/edit" params={{ id: listing.id }}>
                   Edit

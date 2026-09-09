@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -8,15 +8,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
-import { currency, fetchCategories, type Product } from "@/lib/marketplace";
+import { fetchCategories, money, type Product } from "@/lib/marketplace";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
       { title: "Admin panel — ReMarket" },
-      { name: "description", content: "Moderate listings, manage users, categories and orders on ReMarket." },
+      { name: "description", content: "Moderate listings, review reports, manage members and categories on ReMarket." },
       { property: "og:title", content: "Admin panel — ReMarket" },
-      { property: "og:description", content: "Moderate listings, manage users, categories and orders." },
+      { property: "og:description", content: "Moderate listings, review reports, manage members and categories." },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -26,6 +26,15 @@ export const Route = createFileRoute("/admin")({
     </RequireAuth>
   ),
 });
+
+interface ReportRow {
+  id: string;
+  product_id: string;
+  reason: string;
+  details: string;
+  resolved: boolean;
+  created_at: string;
+}
 
 function AdminPanel() {
   const queryClient = useQueryClient();
@@ -49,11 +58,11 @@ function AdminPanel() {
     },
   });
 
-  const { data: orders = [] } = useQuery({
-    queryKey: ["admin-orders"],
+  const { data: reports = [] } = useQuery({
+    queryKey: ["admin-reports"],
     queryFn: async () => {
-      const { data } = await supabase.from("orders").select("*").order("created_at", { ascending: false });
-      return data ?? [];
+      const { data } = await supabase.from("reports").select("*").order("created_at", { ascending: false });
+      return (data ?? []) as ReportRow[];
     },
   });
 
@@ -63,8 +72,18 @@ function AdminPanel() {
       toast.error(error.message);
       return;
     }
-    toast.success(`Listing ${status}`);
+    toast.success(status === "approved" ? "Listing restored" : "Listing taken down");
     void queryClient.invalidateQueries();
+  };
+
+  const resolveReport = async (id: string) => {
+    const { error } = await supabase.from("reports").update({ resolved: true }).eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Report closed");
+    void queryClient.invalidateQueries({ queryKey: ["admin-reports"] });
   };
 
   const addCategory = async () => {
@@ -85,7 +104,7 @@ function AdminPanel() {
     void queryClient.invalidateQueries({ queryKey: ["categories"] });
   };
 
-  const revenue = orders.reduce((sum, order) => sum + Number(order.total), 0);
+  const openReports = reports.filter((report) => !report.resolved).length;
 
   return (
     <div className="px-4 py-10 sm:px-8">
@@ -93,10 +112,10 @@ function AdminPanel() {
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          ["Users", String(users.length)],
+          ["Members", String(users.length)],
           ["Listings", String(products.length)],
-          ["Orders", String(orders.length)],
-          ["Gross revenue", currency(revenue)],
+          ["Live listings", String(products.filter((p) => p.status === "approved").length)],
+          ["Open reports", String(openReports)],
         ].map(([label, value]) => (
           <div key={label} className="glass-panel rounded-3xl p-5">
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{label}</p>
@@ -107,21 +126,25 @@ function AdminPanel() {
 
       <Tabs defaultValue="moderation" className="mt-8">
         <TabsList className="flex flex-wrap">
-          <TabsTrigger value="moderation">Moderation</TabsTrigger>
-          <TabsTrigger value="users">Users</TabsTrigger>
-          <TabsTrigger value="orders">Orders</TabsTrigger>
+          <TabsTrigger value="moderation">Listings</TabsTrigger>
+          <TabsTrigger value="reports">Reports</TabsTrigger>
+          <TabsTrigger value="users">Members</TabsTrigger>
           <TabsTrigger value="categories">Categories</TabsTrigger>
         </TabsList>
 
         <TabsContent value="moderation" className="mt-6 space-y-3">
           {products.map((product) => (
             <div key={product.id} className="glass-panel flex flex-wrap items-center justify-between gap-3 rounded-3xl p-5">
-              <span className="font-display text-lg">{product.title}</span>
-              <span className="rounded-full bg-secondary px-3 py-1 text-xs uppercase">{product.status}</span>
-              <span className="text-primary">{currency(Number(product.price))}</span>
+              <Link to="/product/$id" params={{ id: product.id }} className="font-display text-lg hover:underline">
+                {product.title}
+              </Link>
+              <span className="rounded-full bg-secondary px-3 py-1 text-xs uppercase">
+                {product.status === "approved" ? "live" : product.status}
+              </span>
+              <span className="text-primary">{money(Number(product.price), product.currency)}</span>
               <div className="flex gap-2">
                 <Button size="sm" className="rounded-full" onClick={() => void setStatus(product.id, "approved")}>
-                  Approve
+                  Restore
                 </Button>
                 <Button
                   size="sm"
@@ -129,11 +152,37 @@ function AdminPanel() {
                   className="rounded-full"
                   onClick={() => void setStatus(product.id, "rejected")}
                 >
-                  Reject
+                  Take down
                 </Button>
               </div>
             </div>
           ))}
+        </TabsContent>
+
+        <TabsContent value="reports" className="mt-6 space-y-3">
+          {reports.map((report) => (
+            <div key={report.id} className="glass-panel flex flex-wrap items-center justify-between gap-3 rounded-3xl p-5">
+              <div>
+                <p className="font-semibold">{report.reason}</p>
+                <p className="text-sm text-muted-foreground">{report.details || "No extra details"}</p>
+              </div>
+              <Link
+                to="/product/$id"
+                params={{ id: report.product_id }}
+                className="text-sm font-semibold text-primary hover:underline"
+              >
+                View listing →
+              </Link>
+              {report.resolved ? (
+                <span className="rounded-full bg-secondary px-3 py-1 text-xs uppercase">closed</span>
+              ) : (
+                <Button size="sm" variant="secondary" className="rounded-full" onClick={() => void resolveReport(report.id)}>
+                  Mark reviewed
+                </Button>
+              )}
+            </div>
+          ))}
+          {reports.length === 0 && <p className="text-muted-foreground">No reports yet.</p>}
         </TabsContent>
 
         <TabsContent value="users" className="mt-6 space-y-3">
@@ -141,16 +190,6 @@ function AdminPanel() {
             <div key={profile.id} className="glass-panel flex items-center justify-between rounded-3xl p-5">
               <span>{profile.full_name ?? "Unnamed member"}</span>
               <span className="text-sm text-muted-foreground">{profile.store_name ?? profile.city ?? "—"}</span>
-            </div>
-          ))}
-        </TabsContent>
-
-        <TabsContent value="orders" className="mt-6 space-y-3">
-          {orders.map((order) => (
-            <div key={order.id} className="glass-panel flex items-center justify-between rounded-3xl p-5">
-              <span>#{order.id.slice(0, 8)}</span>
-              <span className="rounded-full bg-secondary px-3 py-1 text-xs uppercase">{order.status}</span>
-              <span className="text-primary">{currency(Number(order.total))}</span>
             </div>
           ))}
         </TabsContent>

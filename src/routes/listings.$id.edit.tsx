@@ -10,15 +10,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
-import type { Product } from "@/lib/marketplace";
+import { CONDITIONS, CURRENCIES, type Condition, type Product } from "@/lib/marketplace";
 
 export const Route = createFileRoute("/listings/$id/edit")({
   head: () => ({
     meta: [
-      { title: "Edit listing — ReMarket" },
-      { name: "description", content: "Update the price, description and stock of your ReMarket listing." },
-      { property: "og:title", content: "Edit listing — ReMarket" },
-      { property: "og:description", content: "Update the price, description and stock of your ReMarket listing." },
+      { title: "Edit ad — ReMarket" },
+      { name: "description", content: "Update the price, description, condition and location of your ReMarket ad." },
+      { property: "og:title", content: "Edit ad — ReMarket" },
+      { property: "og:description", content: "Update the price, description, condition and location of your ad." },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -30,10 +30,11 @@ export const Route = createFileRoute("/listings/$id/edit")({
 });
 
 const editSchema = z.object({
-  title: z.string().trim().min(4).max(120),
-  description: z.string().trim().min(10).max(2000),
-  price: z.number().positive().max(10_000_000),
-  stock: z.number().int().min(0).max(9999),
+  title: z.string().trim().min(4, "Title is too short").max(120),
+  description: z.string().trim().min(10, "Description is too short").max(2000),
+  price: z.number().positive("Enter a price").max(100_000_000),
+  location: z.string().trim().min(2, "Where is the item?").max(100),
+  item_age: z.string().trim().max(60),
 });
 
 function EditListing() {
@@ -47,7 +48,16 @@ function EditListing() {
     },
   });
 
-  const [form, setForm] = useState({ title: "", description: "", price: "", stock: "" });
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    price: "",
+    currency: "INR",
+    location: "",
+    item_age: "",
+    negotiable: true,
+    condition: "used" as Condition,
+  });
 
   useEffect(() => {
     if (product) {
@@ -55,7 +65,11 @@ function EditListing() {
         title: product.title,
         description: product.description ?? "",
         price: String(product.price),
-        stock: String(product.stock),
+        currency: product.currency ?? "INR",
+        location: product.location ?? "",
+        item_age: product.item_age ?? "",
+        negotiable: product.negotiable ?? true,
+        condition: product.condition,
       });
     }
   }, [product]);
@@ -65,18 +79,22 @@ function EditListing() {
       title: form.title,
       description: form.description,
       price: Number(form.price),
-      stock: Number(form.stock),
+      location: form.location,
+      item_age: form.item_age,
     });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? "Check your listing");
       return;
     }
-    const { error } = await supabase.from("products").update(parsed.data).eq("id", id);
+    const { error } = await supabase
+      .from("products")
+      .update({ ...parsed.data, currency: form.currency, negotiable: form.negotiable, condition: form.condition })
+      .eq("id", id);
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.success("Listing updated");
+    toast.success("Ad updated");
     void navigate({ to: "/dashboard" });
   };
 
@@ -86,13 +104,13 @@ function EditListing() {
       toast.error(error.message);
       return;
     }
-    toast.success("Listing deleted");
+    toast.success("Ad deleted");
     void navigate({ to: "/dashboard" });
   };
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10 sm:px-8">
-      <h1 className="font-display text-4xl tracking-tight">Edit listing</h1>
+      <h1 className="font-display text-4xl tracking-tight">Edit ad</h1>
       <div className="glass-panel mt-6 space-y-4 rounded-3xl p-6">
         <div className="space-y-2">
           <Label htmlFor="title">Title</Label>
@@ -124,24 +142,77 @@ function EditListing() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="stock">Stock</Label>
+            <Label htmlFor="currency">Currency</Label>
+            <select
+              id="currency"
+              className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+              value={form.currency}
+              onChange={(event) => setForm({ ...form, currency: event.target.value })}
+            >
+              {CURRENCIES.map((code) => (
+                <option key={code} value={code}>
+                  {code}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="location">Location</Label>
             <Input
-              id="stock"
-              type="number"
-              value={form.stock}
-              onChange={(event) => setForm({ ...form, stock: event.target.value })}
+              id="location"
+              value={form.location}
+              maxLength={100}
+              onChange={(event) => setForm({ ...form, location: event.target.value })}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="item_age">Age / usage</Label>
+            <Input
+              id="item_age"
+              value={form.item_age}
+              maxLength={60}
+              onChange={(event) => setForm({ ...form, item_age: event.target.value })}
             />
           </div>
         </div>
+        <div className="space-y-2">
+          <Label>Condition</Label>
+          <div className="flex flex-wrap gap-2">
+            {CONDITIONS.map((condition) => (
+              <Button
+                key={condition.value}
+                type="button"
+                variant={form.condition === condition.value ? "default" : "secondary"}
+                className="rounded-full"
+                onClick={() => setForm({ ...form, condition: condition.value })}
+              >
+                {condition.label}
+              </Button>
+            ))}
+          </div>
+        </div>
         <div className="flex gap-2">
-          <Button
-            onClick={() => void save()}
-            className="sunset-gradient rounded-full border-0 text-primary-foreground"
-          >
+          {[
+            { label: "Negotiable", value: true },
+            { label: "Fixed price", value: false },
+          ].map((option) => (
+            <Button
+              key={option.label}
+              type="button"
+              variant={form.negotiable === option.value ? "default" : "secondary"}
+              className="rounded-full"
+              onClick={() => setForm({ ...form, negotiable: option.value })}
+            >
+              {option.label}
+            </Button>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <Button onClick={() => void save()} className="sunset-gradient rounded-full border-0 text-primary-foreground">
             Save changes
           </Button>
           <Button variant="destructive" className="rounded-full" onClick={() => void remove()}>
-            Delete listing
+            Delete ad
           </Button>
         </div>
       </div>
