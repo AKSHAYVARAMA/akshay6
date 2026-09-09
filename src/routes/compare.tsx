@@ -4,15 +4,15 @@ import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { currency, type Product } from "@/lib/marketplace";
+import { money, type Product } from "@/lib/marketplace";
 
 export const Route = createFileRoute("/compare")({
   head: () => ({
     meta: [
-      { title: "Compare products — ReMarket" },
-      { name: "description", content: "Compare price, condition, stock and location side by side on ReMarket." },
-      { property: "og:title", content: "Compare products — ReMarket" },
-      { property: "og:description", content: "Compare price, condition, stock and location side by side." },
+      { title: "Compare listings — ReMarket" },
+      { name: "description", content: "Compare price, condition, age and location side by side on ReMarket." },
+      { property: "og:title", content: "Compare listings — ReMarket" },
+      { property: "og:description", content: "Compare price, condition, age and location side by side." },
     ],
   }),
   component: ComparePage,
@@ -55,9 +55,7 @@ function ComparePage() {
       </div>
 
       {products.length === 0 ? (
-        <p className="mt-6 text-muted-foreground">
-          Nothing to compare yet — open a listing and tap “Compare”.
-        </p>
+        <p className="mt-6 text-muted-foreground">Nothing to compare yet — open a listing and tap “Compare”.</p>
       ) : (
         <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {products.map((product) => (
@@ -72,15 +70,19 @@ function ComparePage() {
               <dl className="mt-3 space-y-1 text-sm text-muted-foreground">
                 <div className="flex justify-between">
                   <dt>Price</dt>
-                  <dd className="font-semibold text-primary">{currency(Number(product.price))}</dd>
+                  <dd className="font-semibold text-primary">{money(Number(product.price), product.currency)}</dd>
                 </div>
                 <div className="flex justify-between">
                   <dt>Condition</dt>
                   <dd className="capitalize">{product.condition}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt>Stock</dt>
-                  <dd>{product.stock}</dd>
+                  <dt>Age / usage</dt>
+                  <dd>{product.item_age || "—"}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt>Price type</dt>
+                  <dd>{product.negotiable ? "Negotiable" : "Fixed"}</dd>
                 </div>
                 <div className="flex justify-between">
                   <dt>Location</dt>

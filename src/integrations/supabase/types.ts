@@ -14,38 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      cart_items: {
-        Row: {
-          created_at: string
-          id: string
-          product_id: string
-          quantity: number
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          product_id: string
-          quantity?: number
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          product_id?: string
-          quantity?: number
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "cart_items_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       categories: {
         Row: {
           created_at: string
@@ -164,107 +132,20 @@ export type Database = {
         }
         Relationships: []
       }
-      order_items: {
-        Row: {
-          created_at: string
-          id: string
-          image: string | null
-          order_id: string
-          product_id: string | null
-          quantity: number
-          seller_id: string | null
-          title: string
-          unit_price: number
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          image?: string | null
-          order_id: string
-          product_id?: string | null
-          quantity?: number
-          seller_id?: string | null
-          title: string
-          unit_price: number
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          image?: string | null
-          order_id?: string
-          product_id?: string | null
-          quantity?: number
-          seller_id?: string | null
-          title?: string
-          unit_price?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "order_items_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "orders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "order_items_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      orders: {
-        Row: {
-          buyer_id: string
-          created_at: string
-          id: string
-          ship_address: string
-          ship_city: string
-          ship_name: string
-          ship_phone: string
-          status: Database["public"]["Enums"]["order_status"]
-          total: number
-          updated_at: string
-        }
-        Insert: {
-          buyer_id: string
-          created_at?: string
-          id?: string
-          ship_address?: string
-          ship_city?: string
-          ship_name?: string
-          ship_phone?: string
-          status?: Database["public"]["Enums"]["order_status"]
-          total?: number
-          updated_at?: string
-        }
-        Update: {
-          buyer_id?: string
-          created_at?: string
-          id?: string
-          ship_address?: string
-          ship_city?: string
-          ship_name?: string
-          ship_phone?: string
-          status?: Database["public"]["Enums"]["order_status"]
-          total?: number
-          updated_at?: string
-        }
-        Relationships: []
-      }
       products: {
         Row: {
           category_id: string | null
           compare_at_price: number | null
           condition: Database["public"]["Enums"]["product_condition"]
           created_at: string
+          currency: string
           description: string
           featured: boolean
           id: string
           images: string[]
+          item_age: string
           location: string
+          negotiable: boolean
           price: number
           seller_id: string | null
           seller_name: string
@@ -279,11 +160,14 @@ export type Database = {
           compare_at_price?: number | null
           condition?: Database["public"]["Enums"]["product_condition"]
           created_at?: string
+          currency?: string
           description?: string
           featured?: boolean
           id?: string
           images?: string[]
+          item_age?: string
           location?: string
+          negotiable?: boolean
           price: number
           seller_id?: string | null
           seller_name?: string
@@ -298,11 +182,14 @@ export type Database = {
           compare_at_price?: number | null
           condition?: Database["public"]["Enums"]["product_condition"]
           created_at?: string
+          currency?: string
           description?: string
           featured?: boolean
           id?: string
           images?: string[]
+          item_age?: string
           location?: string
+          negotiable?: boolean
           price?: number
           seller_id?: string | null
           seller_name?: string
@@ -383,6 +270,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "recently_viewed_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reports: {
+        Row: {
+          created_at: string
+          details: string
+          id: string
+          product_id: string
+          reason: string
+          reporter_id: string
+          resolved: boolean
+        }
+        Insert: {
+          created_at?: string
+          details?: string
+          id?: string
+          product_id: string
+          reason: string
+          reporter_id: string
+          resolved?: boolean
+        }
+        Update: {
+          created_at?: string
+          details?: string
+          id?: string
+          product_id?: string
+          reason?: string
+          reporter_id?: string
+          resolved?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
@@ -493,8 +418,7 @@ export type Database = {
     }
     Enums: {
       app_role: "buyer" | "seller" | "admin"
-      order_status: "pending" | "paid" | "shipped" | "delivered" | "cancelled"
-      product_condition: "new" | "used"
+      product_condition: "new" | "used" | "refurbished"
       product_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
@@ -624,8 +548,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["buyer", "seller", "admin"],
-      order_status: ["pending", "paid", "shipped", "delivered", "cancelled"],
-      product_condition: ["new", "used"],
+      product_condition: ["new", "used", "refurbished"],
       product_status: ["pending", "approved", "rejected"],
     },
   },

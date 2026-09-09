@@ -11,15 +11,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchCategories } from "@/lib/marketplace";
+import { CONDITIONS, CURRENCIES, fetchCategories, type Condition } from "@/lib/marketplace";
 
 export const Route = createFileRoute("/listings/new")({
   head: () => ({
     meta: [
-      { title: "List an item — ReMarket" },
-      { name: "description", content: "Create a listing on ReMarket and sell new or used items fast." },
-      { property: "og:title", content: "List an item — ReMarket" },
-      { property: "og:description", content: "Create a listing on ReMarket and sell new or used items fast." },
+      { title: "Post an ad — ReMarket" },
+      { name: "description", content: "Post a free ad on ReMarket and sell new, used or refurbished items fast." },
+      { property: "og:title", content: "Post an ad — ReMarket" },
+      { property: "og:description", content: "Post a free ad and sell new, used or refurbished items fast." },
     ],
   }),
   component: () => (
@@ -32,9 +32,9 @@ export const Route = createFileRoute("/listings/new")({
 const listingSchema = z.object({
   title: z.string().trim().min(4, "Give your item a title").max(120),
   description: z.string().trim().min(10, "Describe your item").max(2000),
-  price: z.number().positive("Enter a price").max(10_000_000),
-  stock: z.number().int().min(1).max(9999),
+  price: z.number().positive("Enter a price").max(100_000_000),
   location: z.string().trim().min(2, "Where is the item?").max(100),
+  item_age: z.string().trim().max(60),
 });
 
 function NewListing() {
@@ -46,9 +46,11 @@ function NewListing() {
     title: "",
     description: "",
     price: "",
-    stock: "1",
+    currency: "INR",
     location: "",
-    condition: "used" as "new" | "used",
+    item_age: "",
+    negotiable: true,
+    condition: "used" as Condition,
     categoryId: "",
     images: "",
   });
@@ -58,8 +60,8 @@ function NewListing() {
       title: form.title,
       description: form.description,
       price: Number(form.price),
-      stock: Number(form.stock),
       location: form.location,
+      item_age: form.item_age,
     });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? "Check your listing");
@@ -77,25 +79,30 @@ function NewListing() {
       title: parsed.data.title,
       description: parsed.data.description,
       price: parsed.data.price,
-      stock: parsed.data.stock,
+      currency: form.currency,
+      item_age: parsed.data.item_age,
+      negotiable: form.negotiable,
       location: parsed.data.location,
       condition: form.condition,
       category_id: form.categoryId || null,
       images: images.length ? images : ["/images/bag.jpg"],
-      status: "pending",
+      status: "approved",
     });
     setBusy(false);
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.success("Listing submitted for review");
+    toast.success("Your ad is live!");
     void navigate({ to: "/dashboard" });
   };
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10 sm:px-8">
-      <h1 className="font-display text-4xl tracking-tight">List an item</h1>
+      <h1 className="font-display text-4xl tracking-tight">Post an ad</h1>
+      <p className="mt-2 text-muted-foreground">
+        Buyers contact you in chat, you agree a price, then meet and complete the deal in person.
+      </p>
       <div className="glass-panel mt-6 space-y-4 rounded-3xl p-6">
         <div className="space-y-2">
           <Label htmlFor="title">Title</Label>
@@ -118,7 +125,7 @@ function NewListing() {
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="price">Price (USD)</Label>
+            <Label htmlFor="price">Price</Label>
             <Input
               id="price"
               type="number"
@@ -127,13 +134,19 @@ function NewListing() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="stock">Quantity</Label>
-            <Input
-              id="stock"
-              type="number"
-              value={form.stock}
-              onChange={(event) => setForm({ ...form, stock: event.target.value })}
-            />
+            <Label htmlFor="currency">Currency</Label>
+            <select
+              id="currency"
+              className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+              value={form.currency}
+              onChange={(event) => setForm({ ...form, currency: event.target.value })}
+            >
+              {CURRENCIES.map((code) => (
+                <option key={code} value={code}>
+                  {code}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="location">Location</Label>
@@ -141,6 +154,7 @@ function NewListing() {
               id="location"
               value={form.location}
               maxLength={100}
+              placeholder="City or area"
               onChange={(event) => setForm({ ...form, location: event.target.value })}
             />
           </div>
@@ -160,22 +174,51 @@ function NewListing() {
               ))}
             </select>
           </div>
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="item_age">Age / usage (for used and refurbished items)</Label>
+            <Input
+              id="item_age"
+              value={form.item_age}
+              maxLength={60}
+              placeholder="e.g. 2 years old, lightly used"
+              onChange={(event) => setForm({ ...form, item_age: event.target.value })}
+            />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label>Condition</Label>
+          <div className="flex flex-wrap gap-2">
+            {CONDITIONS.map((condition) => (
+              <Button
+                key={condition.value}
+                type="button"
+                variant={form.condition === condition.value ? "default" : "secondary"}
+                className="rounded-full"
+                onClick={() => setForm({ ...form, condition: condition.value })}
+              >
+                {condition.label}
+              </Button>
+            ))}
+          </div>
         </div>
         <div className="flex gap-2">
-          {(["new", "used"] as const).map((condition) => (
+          {[
+            { label: "Negotiable", value: true },
+            { label: "Fixed price", value: false },
+          ].map((option) => (
             <Button
-              key={condition}
+              key={option.label}
               type="button"
-              variant={form.condition === condition ? "default" : "secondary"}
-              className="rounded-full capitalize"
-              onClick={() => setForm({ ...form, condition })}
+              variant={form.negotiable === option.value ? "default" : "secondary"}
+              className="rounded-full"
+              onClick={() => setForm({ ...form, negotiable: option.value })}
             >
-              {condition}
+              {option.label}
             </Button>
           ))}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="images">Image URLs (one per line)</Label>
+          <Label htmlFor="images">Photo URLs (one per line)</Label>
           <Textarea
             id="images"
             rows={3}
@@ -188,7 +231,7 @@ function NewListing() {
           onClick={() => void submit()}
           className="sunset-gradient w-full rounded-full border-0 text-primary-foreground"
         >
-          Submit for review
+          Publish ad
         </Button>
       </div>
     </div>

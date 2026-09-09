@@ -1,6 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { Bell, Heart, LayoutDashboard, LogOut, MessageCircle, Search, ShoppingCart, User } from "lucide-react";
+import { Bell, Heart, LayoutDashboard, LogOut, MessageCircle, Search, User } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -13,21 +12,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
 
 export function SiteHeader() {
   const { user, profile, isAdmin, isSeller, signOut } = useAuth();
   const [term, setTerm] = useState("");
   const navigate = useNavigate();
-
-  const { data: cartCount = 0 } = useQuery({
-    queryKey: ["cart-count", user?.id],
-    enabled: !!user,
-    queryFn: async () => {
-      const { count } = await supabase.from("cart_items").select("*", { count: "exact", head: true });
-      return count ?? 0;
-    },
-  });
 
   return (
     <header className="relative z-30 px-4 pt-4 sm:px-8 sm:pt-6">
@@ -45,14 +34,18 @@ export function SiteHeader() {
         </Link>
 
         <div className="hidden items-center gap-1 rounded-full bg-secondary p-1 text-sm font-medium text-muted-foreground md:flex">
-          <Link to="/browse" className="rounded-full px-4 py-1.5 hover:bg-background/70">
-            Buy
+          <Link to="/browse" search={{ condition: "new" }} className="rounded-full px-4 py-1.5 hover:bg-background/70">
+            New
           </Link>
-          <Link to="/listings/new" className="rounded-full px-4 py-1.5 hover:bg-background/70">
-            Sell
+          <Link to="/browse" search={{ condition: "used" }} className="rounded-full px-4 py-1.5 hover:bg-background/70">
+            Used
           </Link>
-          <Link to="/browse" search={{ category: undefined }} className="rounded-full px-4 py-1.5 hover:bg-background/70">
-            Categories
+          <Link
+            to="/browse"
+            search={{ condition: "refurbished" }}
+            className="rounded-full px-4 py-1.5 hover:bg-background/70"
+          >
+            Refurbished
           </Link>
         </div>
 
@@ -74,14 +67,24 @@ export function SiteHeader() {
         </form>
 
         <div className="flex items-center gap-2">
-          <Link to="/cart" className="relative grid size-9 place-items-center rounded-full bg-secondary" aria-label="Cart">
-            <ShoppingCart className="size-4" />
-            {cartCount > 0 && (
-              <span className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full bg-accent text-[10px] font-bold text-accent-foreground">
-                {cartCount}
-              </span>
-            )}
-          </Link>
+          {user && (
+            <>
+              <Link
+                to="/wishlist"
+                className="grid size-9 place-items-center rounded-full bg-secondary"
+                aria-label="Favourites"
+              >
+                <Heart className="size-4" />
+              </Link>
+              <Link
+                to="/messages"
+                className="grid size-9 place-items-center rounded-full bg-secondary"
+                aria-label="Chat inbox"
+              >
+                <MessageCircle className="size-4" />
+              </Link>
+            </>
+          )}
 
           {user ? (
             <DropdownMenu>
@@ -96,17 +99,17 @@ export function SiteHeader() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link to="/dashboard">
-                    <LayoutDashboard className="size-4" /> Dashboard
+                    <LayoutDashboard className="size-4" /> My account
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/wishlist">
-                    <Heart className="size-4" /> Wishlist
+                    <Heart className="size-4" /> Favourites
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/messages">
-                    <MessageCircle className="size-4" /> Messages
+                    <MessageCircle className="size-4" /> Chat inbox
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
@@ -137,7 +140,7 @@ export function SiteHeader() {
           )}
 
           <Button asChild size="sm" className="sunset-gradient rounded-full border-0 text-primary-foreground">
-            <Link to="/listings/new">Sell an item</Link>
+            <Link to="/listings/new">Post an ad</Link>
           </Button>
         </div>
       </nav>
