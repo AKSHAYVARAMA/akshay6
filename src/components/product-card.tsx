@@ -1,32 +1,16 @@
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Heart } from "lucide-react";
+import { Heart, MapPin } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { currency, type Product } from "@/lib/marketplace";
+import { conditionClass, money, type Product } from "@/lib/marketplace";
 
 export function ProductCard({ product }: { product: Product }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-
-  const addToCart = useMutation({
-    mutationFn: async () => {
-      if (!user) throw new Error("Sign in to add items to your cart.");
-      const { error } = await supabase
-        .from("cart_items")
-        .upsert({ user_id: user.id, product_id: product.id, quantity: 1 }, { onConflict: "user_id,product_id" });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Added to cart");
-      void queryClient.invalidateQueries({ queryKey: ["cart-count"] });
-      void queryClient.invalidateQueries({ queryKey: ["cart"] });
-    },
-    onError: (error: Error) => toast.error(error.message),
-  });
 
   const saveItem = useMutation({
     mutationFn: async () => {
@@ -37,7 +21,7 @@ export function ProductCard({ product }: { product: Product }) {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Saved to wishlist");
+      toast.success("Saved to favourites");
       void queryClient.invalidateQueries({ queryKey: ["wishlist"] });
     },
     onError: (error: Error) => toast.error(error.message),
@@ -57,15 +41,13 @@ export function ProductCard({ product }: { product: Product }) {
           />
         </Link>
         <span
-          className={`absolute left-3 top-3 rounded-full px-2.5 py-1 text-[10px] font-bold ${
-            product.condition === "new" ? "bg-accent text-accent-foreground" : "bg-gold text-ink"
-          }`}
+          className={`absolute left-3 top-3 rounded-full px-2.5 py-1 text-[10px] font-bold ${conditionClass(product.condition)}`}
         >
           {product.condition.toUpperCase()}
         </span>
         <button
           onClick={() => saveItem.mutate()}
-          aria-label="Save to wishlist"
+          aria-label="Save to favourites"
           className="absolute right-3 top-3 grid size-8 place-items-center rounded-full bg-background/80 text-muted-foreground backdrop-blur"
         >
           <Heart className="size-4" />
@@ -75,24 +57,26 @@ export function ProductCard({ product }: { product: Product }) {
         <Link to="/product/$id" params={{ id: product.id }}>
           <h3 className="font-display text-lg leading-tight">{product.title}</h3>
         </Link>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          {product.location} · {product.views} views
+        <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+          <MapPin className="size-3" /> {product.location || "Location not set"}
         </p>
         <div className="mt-3 flex items-end justify-between gap-2">
           <div>
-            <p className="font-display text-xl font-semibold text-primary">{currency(product.price)}</p>
-            {product.compare_at_price ? (
-              <p className="text-[10px] text-muted-foreground line-through">{currency(product.compare_at_price)}</p>
-            ) : (
-              <p className="text-[10px] text-muted-foreground">{product.seller_name}</p>
-            )}
+            <p className="font-display text-xl font-semibold text-primary">
+              {money(product.price, product.currency)}
+            </p>
+            <p className="text-[10px] text-muted-foreground">
+              {product.negotiable ? "Negotiable" : "Fixed price"} · {product.seller_name}
+            </p>
           </div>
           <Button
+            asChild
             size="sm"
-            onClick={() => addToCart.mutate()}
             className="rounded-full bg-foreground px-3.5 text-xs text-background hover:bg-foreground/90"
           >
-            Add to cart
+            <Link to="/product/$id" params={{ id: product.id }}>
+              Chat
+            </Link>
           </Button>
         </div>
       </div>
