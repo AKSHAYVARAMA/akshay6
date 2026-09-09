@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/product-card";
-import { fetchCategories, fetchProducts } from "@/lib/marketplace";
+import { fetchCategories, fetchProducts, type Condition } from "@/lib/marketplace";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -13,12 +13,12 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Shop featured new and used listings on ReMarket: electronics, furniture, fashion, sports and more. List your own item in minutes.",
+          "Find new, used and refurbished items near you on ReMarket. Chat with the seller, agree a price and meet in person. Post a free ad in minutes.",
       },
       { property: "og:title", content: "ReMarket — Buy Smart. Sell Fast." },
       {
         property: "og:description",
-        content: "The circular marketplace for new and used goods. Buy with confidence, sell in minutes.",
+        content: "Local marketplace for new, used and refurbished goods. Chat, negotiate and meet — no online payments.",
       },
     ],
   }),
@@ -29,12 +29,13 @@ const conditionChips = [
   { label: "All", value: null },
   { label: "New", value: "new" as const },
   { label: "Used", value: "used" as const },
+  { label: "Refurbished", value: "refurbished" as const },
 ];
 
 function Home() {
   const navigate = useNavigate();
   const [term, setTerm] = useState("");
-  const [condition, setCondition] = useState<"new" | "used" | null>(null);
+  const [condition, setCondition] = useState<Condition | null>(null);
 
   const { data: featured = [] } = useQuery({
     queryKey: ["products", "featured"],
@@ -62,15 +63,15 @@ function Home() {
               <span className="sunset-text">previously lived.</span>
             </h1>
             <p className="mt-5 max-w-md text-lg leading-relaxed text-muted-foreground">
-              The circular marketplace for new and used goods — list in minutes, negotiate in real time, and ship with
-              confidence.
+              New, used and refurbished goods near you — post a free ad in minutes, chat to negotiate, then meet and
+              complete the deal in person.
             </p>
             <div className="mt-7 flex flex-wrap items-center gap-3">
               <Button asChild size="lg" className="sunset-gradient rounded-full border-0 text-primary-foreground">
                 <Link to="/browse">Browse the market</Link>
               </Button>
               <Button asChild size="lg" variant="secondary" className="rounded-full">
-                <Link to="/listings/new">Become a seller</Link>
+                <Link to="/listings/new">Post a free ad</Link>
               </Button>
             </div>
             <div className="mt-8 flex items-center gap-6 text-sm">
@@ -142,8 +143,8 @@ function Home() {
                 {[
                   { label: "Category", value: categories[0]?.name ?? "Electronics" },
                   { label: "Condition", value: condition ? condition.toUpperCase() : "Any" },
-                  { label: "Price", value: "$50 – $900" },
-                  { label: "Location", value: "Portland, OR" },
+                  { label: "Deal", value: "Meet in person" },
+                  { label: "Location", value: "Near you" },
                 ].map((item) => (
                   <div key={item.label} className="rounded-2xl border border-border bg-secondary p-3">
                     <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{item.label}</p>
