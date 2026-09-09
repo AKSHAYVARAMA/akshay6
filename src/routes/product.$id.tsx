@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Heart, MessageCircle, Scale } from "lucide-react";
+import { Flag, Heart, MapPin, MessageCircle, Scale } from "lucide-react";
 import { toast } from "sonner";
 
 import { ProductCard } from "@/components/product-card";
@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { currency, fetchProduct, fetchProducts } from "@/lib/marketplace";
+import { conditionClass, fetchProduct, fetchProducts, money } from "@/lib/marketplace";
 
 export const Route = createFileRoute("/product/$id")({
   head: () => ({
@@ -31,6 +31,8 @@ interface Review {
   created_at: string;
 }
 
+const REPORT_REASONS = ["Scam or fraud", "Prohibited item", "Wrong category", "Spam or duplicate", "Offensive content"];
+
 function ProductPage() {
   const { id } = Route.useParams();
   const { user, profile } = useAuth();
@@ -39,8 +41,24 @@ function ProductPage() {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
   const [message, setMessage] = useState("");
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportReason, setReportReason] = useState(REPORT_REASONS[0]!);
+  const [reportDetails, setReportDetails] = useState("");
 
   const { data: product, isLoading } = useQuery({ queryKey: ["product", id], queryFn: () => fetchProduct(id) });
+
+  const { data: seller } = useQuery({
+    queryKey: ["seller-profile", product?.seller_id],
+    enabled: !!product?.seller_id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("full_name, store_name, city, bio, avatar_url, created_at")
+        .eq("id", product!.seller_id!)
+        .maybeSingle();
+      return data;
+    },
+  });
 
   const { data: reviews = [] } = useQuery({
     queryKey: ["reviews", id],
@@ -70,21 +88,6 @@ function ProductPage() {
       );
   }, [user, product]);
 
-  const addToCart = useMutation({
-    mutationFn: async () => {
-      if (!user) throw new Error("Sign in to add items to your cart.");
-      const { error } = await supabase
-        .from("cart_items")
-        .upsert({ user_id: user.id, product_id: id, quantity: 1 }, { onConflict: "user_id,product_id" });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Added to cart");
-      void queryClient.invalidateQueries({ queryKey: ["cart-count"] });
-    },
-    onError: (error: Error) => toast.error(error.message),
-  });
-
   const submitReview = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Sign in to leave a review.");
@@ -110,10 +113,11 @@ function ProductPage() {
   });
 
   const contactSeller = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (body: string) => {
       if (!user) throw new Error("Sign in to message the seller.");
       if (!product?.seller_id) throw new Error("This demo listing has no seller inbox.");
-      if (!message.trim()) throw new Error("Write a message first.");
+      if (product.seller_id === user.id) throw new Error("This is your own listing.");
+      if (!body.trim()) throw new Error("Write a message first.");
       const { data: conversation, error } = await supabase
         .from("conversations")
         .upsert(
@@ -125,21 +129,43 @@ function ProductPage() {
       if (error) throw error;
       const { error: messageError } = await supabase
         .from("messages")
-        .insert({ conversation_id: conversation.id, sender_id: user.id, body: message.trim().slice(0, 2000) });
+        .insert({ conversation_id: conversation.id, sender_id: user.id, body: body.trim().slice(0, 2000) });
       if (messageError) throw messageError;
     },
     onSuccess: () => {
       setMessage("");
-      toast.success("Message sent");
+      toast.success("Message sent — continue in your chat inbox");
       void navigate({ to: "/messages" });
     },
     onError: (error: Error) => toast.error(error.message),
   });
 
+  const submitReport = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error("Sign in to report a listing.");
+      const { error } = await supabase.from("reports").insert({
+        product_id: id,
+        reporter_id: user.id,
+        reason: reportReason,
+        details: reportDetails.trim().slice(0, 1000),
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setReportOpen(false);
+      setReportDetails("");
+      toast.success("Thanks — our team will review this listing.");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
   const saveWishlist = async () => {
-    if (!user) { toast.error("Sign in to save items."); return; }
+    if (!user) {
+      toast.error("Sign in to save items.");
+      return;
+    }
     await supabase.from("wishlists").upsert({ user_id: user.id, product_id: id }, { onConflict: "user_id,product_id" });
-    toast.success("Saved to wishlist");
+    toast.success("Saved to favourites");
   };
 
   const addToCompare = () => {
@@ -184,30 +210,49 @@ function ProductPage() {
               </div>
             )}
           </div>
+
+          <div className="glass-panel mt-5 rounded-3xl p-6">
+            <h2 className="font-display text-xl">How buying works here</h2>
+            <ol className="mt-3 grid gap-3 text-sm text-muted-foreground sm:grid-cols-5">
+              {["Chat", "Negotiate", "Meet", "Inspect", "Pay in person"].map((step, index) => (
+                <li key={step} className="rounded-2xl border border-border bg-secondary p-3">
+                  <span className="font-display text-lg text-foreground">{index + 1}</span>
+                  <p className="mt-1 font-semibold text-foreground">{step}</p>
+                </li>
+              ))}
+            </ol>
+            <p className="mt-3 text-xs text-muted-foreground">
+              ReMarket never handles payments. Always meet in a public place and inspect the item before paying.
+            </p>
+          </div>
         </div>
 
         <div className="lg:col-span-5">
           <div className="glass-panel rounded-3xl p-6">
-            <span
-              className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${
-                product.condition === "new" ? "bg-accent text-accent-foreground" : "bg-gold text-ink"
-              }`}
-            >
+            <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${conditionClass(product.condition)}`}>
               {product.condition.toUpperCase()}
             </span>
             <h1 className="mt-4 font-display text-3xl tracking-tight">{product.title}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {product.location} · sold by {product.seller_name}
+            <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
+              <MapPin className="size-3.5" /> {product.location || "Location not set"}
             </p>
-            <p className="sunset-text mt-4 font-display text-4xl font-semibold">{currency(product.price)}</p>
-            {product.compare_at_price && (
-              <p className="text-sm text-muted-foreground line-through">{currency(product.compare_at_price)}</p>
-            )}
+            <p className="sunset-text mt-4 font-display text-4xl font-semibold">
+              {money(product.price, product.currency)}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {product.negotiable ? "Price negotiable — make an offer in chat" : "Fixed price"}
+            </p>
 
             <dl className="mt-5 space-y-1.5 text-sm">
+              {product.item_age && (
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">Age / usage</dt>
+                  <dd>{product.item_age}</dd>
+                </div>
+              )}
               <div className="flex justify-between">
-                <dt className="text-muted-foreground">In stock</dt>
-                <dd>{product.stock}</dd>
+                <dt className="text-muted-foreground">Currency</dt>
+                <dd>{product.currency}</dd>
               </div>
               <div className="flex justify-between">
                 <dt className="text-muted-foreground">Rating</dt>
@@ -219,10 +264,10 @@ function ProductPage() {
 
             <div className="mt-6 flex flex-wrap gap-2">
               <Button
-                onClick={() => addToCart.mutate()}
+                onClick={() => contactSeller.mutate(message || "Hi, is this still available?")}
                 className="sunset-gradient flex-1 rounded-full border-0 text-primary-foreground"
               >
-                Add to cart
+                Chat with seller
               </Button>
               <Button variant="secondary" className="rounded-full" onClick={() => void saveWishlist()}>
                 <Heart className="size-4" />
@@ -232,23 +277,75 @@ function ProductPage() {
               </Button>
             </div>
 
-            <p className="mt-6 whitespace-pre-line text-sm leading-relaxed text-muted-foreground">{product.description}</p>
+            <p className="mt-6 whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
+              {product.description}
+            </p>
+          </div>
+
+          <div className="glass-panel mt-5 rounded-3xl p-6">
+            <h2 className="font-display text-xl">Seller</h2>
+            <p className="mt-2 font-semibold">{seller?.store_name || seller?.full_name || product.seller_name}</p>
+            {seller?.city && <p className="text-sm text-muted-foreground">{seller.city}</p>}
+            {seller?.bio && <p className="mt-2 text-sm text-muted-foreground">{seller.bio}</p>}
+            {seller?.created_at && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Member since {new Date(seller.created_at).toLocaleDateString()}
+              </p>
+            )}
           </div>
 
           <div className="glass-panel mt-5 rounded-3xl p-6">
             <h2 className="flex items-center gap-2 font-display text-xl">
-              <MessageCircle className="size-4" /> Ask the seller
+              <MessageCircle className="size-4" /> Message the seller
             </h2>
             <Textarea
               value={message}
               onChange={(event) => setMessage(event.target.value)}
               maxLength={2000}
-              placeholder="Is this still available?"
+              placeholder="Is this still available? Would you take a lower price?"
               className="mt-3"
             />
-            <Button className="mt-3 w-full rounded-full" variant="secondary" onClick={() => contactSeller.mutate()}>
-              Send inquiry
+            <Button
+              className="mt-3 w-full rounded-full"
+              variant="secondary"
+              onClick={() => contactSeller.mutate(message)}
+            >
+              Send message
             </Button>
+          </div>
+
+          <div className="glass-panel mt-5 rounded-3xl p-6">
+            <button
+              onClick={() => setReportOpen((open) => !open)}
+              className="flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground"
+            >
+              <Flag className="size-4" /> Report this listing
+            </button>
+            {reportOpen && (
+              <div className="mt-4 space-y-3">
+                <select
+                  value={reportReason}
+                  onChange={(event) => setReportReason(event.target.value)}
+                  aria-label="Reason for report"
+                  className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                >
+                  {REPORT_REASONS.map((reason) => (
+                    <option key={reason} value={reason}>
+                      {reason}
+                    </option>
+                  ))}
+                </select>
+                <Textarea
+                  value={reportDetails}
+                  maxLength={1000}
+                  placeholder="Tell us what's wrong (optional)"
+                  onChange={(event) => setReportDetails(event.target.value)}
+                />
+                <Button variant="destructive" className="w-full rounded-full" onClick={() => submitReport.mutate()}>
+                  Submit report
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -274,7 +371,7 @@ function ProductPage() {
             value={comment}
             onChange={(event) => setComment(event.target.value)}
             maxLength={1000}
-            placeholder="Share your experience with this item"
+            placeholder="Share your experience with this seller"
             className="mt-3"
           />
           <Button className="mt-3 rounded-full" variant="secondary" onClick={() => submitReview.mutate()}>
