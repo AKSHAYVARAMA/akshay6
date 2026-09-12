@@ -1,17 +1,16 @@
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Heart, MapPin } from "lucide-react";
+import { Heart, MapPin, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { conditionClass, money, type Product } from "@/lib/marketplace";
+import { money, type Product } from "@/lib/marketplace";
 
 export function ProductCard({ product }: { product: Product }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-
   const saveItem = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Sign in to save items.");
@@ -26,9 +25,10 @@ export function ProductCard({ product }: { product: Product }) {
     },
     onError: (error: Error) => toast.error(error.message),
   });
-
+  const conditionLabel =
+    product.condition === "refurbished" ? "REFURBISHED" : product.condition.toUpperCase();
   return (
-    <article className="glass-panel group rounded-3xl p-3">
+    <article className="group overflow-hidden rounded-2xl border border-border bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
       <div className="relative">
         <Link to="/product/$id" params={{ id: product.id }}>
           <img
@@ -37,45 +37,45 @@ export function ProductCard({ product }: { product: Product }) {
             loading="lazy"
             width={1024}
             height={1024}
-            className="aspect-square w-full rounded-2xl bg-muted object-cover"
+            className="aspect-square w-full bg-muted object-cover transition duration-300 group-hover:scale-[1.02]"
           />
         </Link>
         <span
-          className={`absolute left-3 top-3 rounded-full px-2.5 py-1 text-[10px] font-bold ${conditionClass(product.condition)}`}
+          className={`absolute left-3 top-3 rounded-md px-2.5 py-1 text-[10px] font-extrabold tracking-wide condition-${product.condition}`}
         >
-          {product.condition.toUpperCase()}
+          {conditionLabel}
         </span>
         <button
           onClick={() => saveItem.mutate()}
           aria-label="Save to favourites"
-          className="absolute right-3 top-3 grid size-8 place-items-center rounded-full bg-background/80 text-muted-foreground backdrop-blur"
+          className="absolute right-3 top-3 grid size-9 place-items-center rounded-full bg-white/90 text-muted-foreground shadow-sm backdrop-blur hover:text-red-500"
         >
           <Heart className="size-4" />
         </button>
       </div>
-      <div className="p-2">
+      <div className="p-4">
         <Link to="/product/$id" params={{ id: product.id }}>
-          <h3 className="font-display text-lg leading-tight">{product.title}</h3>
+          <h3 className="line-clamp-2 text-base font-extrabold leading-tight">{product.title}</h3>
         </Link>
-        <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+        <p className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
           <MapPin className="size-3" /> {product.location || "Location not set"}
         </p>
-        <div className="mt-3 flex items-end justify-between gap-2">
+        <div className="mt-4 flex items-end justify-between gap-2">
           <div>
-            <p className="font-display text-xl font-semibold text-primary">
+            <p className="text-xl font-extrabold text-[#111827]">
               {money(product.price, product.currency)}
             </p>
-            <p className="text-[10px] text-muted-foreground">
+            <p className="mt-1 text-[11px] text-muted-foreground">
               {product.negotiable ? "Negotiable" : "Fixed price"} · {product.seller_name}
             </p>
           </div>
           <Button
             asChild
             size="sm"
-            className="rounded-full bg-foreground px-3.5 text-xs text-background hover:bg-foreground/90"
+            className="rounded-lg bg-[#111827] px-3 text-xs text-white hover:bg-primary"
           >
             <Link to="/product/$id" params={{ id: product.id }}>
-              Chat
+              <MessageCircle className="mr-1 size-3.5" /> Chat
             </Link>
           </Button>
         </div>

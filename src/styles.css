@@ -4,12 +4,6 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/*
- * ReMarket design system — "Sunset Glass".
- * Warm cream surfaces, frosted glass panels, golden-hour gradient accents.
- * All colors are oklch tokens; never hardcode colors in components.
- */
-
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -17,11 +11,8 @@
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
-  --radius-4xl: calc(var(--radius) + 16px);
-
-  --font-display: "Fraunces", ui-serif, Georgia, serif;
+  --font-display: "Manrope", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
-
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -41,121 +32,71 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-ring-offset-background: var(--background);
-
   --color-brand: var(--brand);
-  --color-gold: var(--gold);
-  --color-rose: var(--rose);
   --color-ink: var(--ink);
-  --color-cream: var(--cream);
-  --color-sand: var(--sand);
-  --color-glass: var(--glass);
-
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
+  --color-new: var(--new);
+  --color-used: var(--used);
+  --color-refurbished: var(--refurbished);
 }
 
 :root {
-  --radius: 1rem;
-
-  --ink: oklch(0.246 0.024 352);
-  --cream: oklch(0.971 0.016 70);
-  --sand: oklch(0.949 0.026 64);
-  --brand: oklch(0.696 0.169 43.6);
-  --gold: oklch(0.804 0.145 75);
-  --rose: oklch(0.763 0.124 6);
-  --glass: oklch(1 0 0 / 55%);
-
-  --background: var(--cream);
-  --foreground: var(--ink);
-  --card: oklch(1 0 0 / 55%);
-  --card-foreground: var(--ink);
-  --popover: oklch(0.995 0.008 70);
-  --popover-foreground: var(--ink);
-  --primary: oklch(0.696 0.169 43.6);
-  --primary-foreground: oklch(0.995 0.008 70);
-  --secondary: oklch(1 0 0 / 60%);
-  --secondary-foreground: var(--ink);
-  --muted: oklch(0.949 0.026 64);
-  --muted-foreground: oklch(0.52 0.03 20);
-  --accent: oklch(0.629 0.198 360);
-  --accent-foreground: oklch(0.995 0.008 70);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.995 0.008 70);
-  --border: oklch(1 0 0 / 60%);
-  --input: oklch(1 0 0 / 70%);
-  --ring: oklch(0.696 0.169 43.6);
-
-  --gradient-sunset: linear-gradient(135deg, var(--gold), var(--brand) 55%, var(--accent));
-  --shadow-glass: 0 20px 50px -30px oklch(0.696 0.169 43.6 / 50%);
-  --shadow-panel: 0 30px 80px -30px oklch(0.629 0.198 360 / 45%);
-
-  --chart-1: oklch(0.696 0.169 43.6);
-  --chart-2: oklch(0.804 0.145 75);
-  --chart-3: oklch(0.629 0.198 360);
-  --chart-4: oklch(0.763 0.124 6);
-  --chart-5: oklch(0.55 0.09 40);
-  --sidebar: oklch(1 0 0 / 60%);
-  --sidebar-foreground: var(--ink);
-  --sidebar-primary: oklch(0.696 0.169 43.6);
-  --sidebar-primary-foreground: oklch(0.995 0.008 70);
-  --sidebar-accent: oklch(0.949 0.026 64);
-  --sidebar-accent-foreground: var(--ink);
-  --sidebar-border: oklch(1 0 0 / 60%);
-  --sidebar-ring: oklch(0.696 0.169 43.6);
+  --radius: 0.9rem;
+  --background: #f4f6f8;
+  --foreground: #111827;
+  --card: #ffffff;
+  --card-foreground: #111827;
+  --popover: #ffffff;
+  --popover-foreground: #111827;
+  --primary: #1769e0;
+  --primary-foreground: #ffffff;
+  --secondary: #eaf2ff;
+  --secondary-foreground: #1558bb;
+  --muted: #eef1f4;
+  --muted-foreground: #667085;
+  --accent: #18a558;
+  --accent-foreground: #ffffff;
+  --destructive: #dc3545;
+  --destructive-foreground: #ffffff;
+  --border: #dfe4ea;
+  --input: #ffffff;
+  --ring: #1769e0;
+  --brand: #1769e0;
+  --ink: #111827;
+  --new: #dcebff;
+  --used: #dff5e8;
+  --refurbished: #fff3c4;
+  --shadow-card: 0 8px 24px rgba(17, 24, 39, 0.07);
 }
 
 .dark {
-  --ink: oklch(0.97 0.012 70);
-  --cream: oklch(0.19 0.02 350);
-  --sand: oklch(0.26 0.025 350);
-  --glass: oklch(1 0 0 / 8%);
-
-  --background: var(--cream);
-  --foreground: var(--ink);
-  --card: oklch(1 0 0 / 7%);
-  --card-foreground: var(--ink);
-  --popover: oklch(0.24 0.022 350);
-  --popover-foreground: var(--ink);
-  --primary: oklch(0.75 0.16 44);
-  --primary-foreground: oklch(0.19 0.02 350);
-  --secondary: oklch(1 0 0 / 10%);
-  --secondary-foreground: var(--ink);
-  --muted: oklch(1 0 0 / 8%);
-  --muted-foreground: oklch(0.75 0.02 40);
-  --accent: oklch(0.68 0.19 360);
-  --accent-foreground: oklch(0.19 0.02 350);
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 14%);
-  --sidebar: oklch(1 0 0 / 6%);
-  --sidebar-accent: oklch(1 0 0 / 10%);
-  --sidebar-border: oklch(1 0 0 / 12%);
+  --background: #111827;
+  --foreground: #f8fafc;
+  --card: #1f2937;
+  --card-foreground: #f8fafc;
+  --popover: #1f2937;
+  --popover-foreground: #f8fafc;
+  --secondary: #243b65;
+  --secondary-foreground: #dcebff;
+  --muted: #293548;
+  --muted-foreground: #aab5c5;
+  --border: #374151;
+  --input: #1f2937;
+  --primary: #4b90f4;
+  --accent: #36c978;
 }
 
 @utility glass-panel {
   border: 1px solid var(--border);
-  background-color: var(--glass);
-  backdrop-filter: blur(20px);
-  box-shadow: var(--shadow-glass);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
 }
 
 @utility sunset-gradient {
-  background-image: var(--gradient-sunset);
+  background-image: linear-gradient(135deg, #1769e0, #18a558);
 }
 
 @utility sunset-text {
-  background-image: var(--gradient-sunset);
+  background-image: linear-gradient(135deg, #1769e0, #18a558);
   background-clip: text;
   color: transparent;
 }
@@ -164,17 +105,38 @@
   * {
     border-color: var(--color-border);
   }
-
   body {
-    background-color: var(--color-background);
+    background: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
   }
-
   h1,
   h2,
   h3 {
     font-family: var(--font-display);
-    letter-spacing: -0.02em;
+    letter-spacing: -0.025em;
   }
+}
+
+.market-section {
+  max-width: 1280px;
+  margin-inline: auto;
+}
+.condition-new {
+  background: var(--new);
+  color: #1558bb;
+}
+.condition-used {
+  background: var(--used);
+  color: #087a3b;
+}
+.condition-refurbished {
+  background: var(--refurbished);
+  color: #8a6500;
+}
+.hero-grid {
+  background-image:
+    linear-gradient(rgba(23, 105, 224, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(23, 105, 224, 0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
 }
