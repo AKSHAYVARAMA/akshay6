@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { MessageCircle, RefreshCw, Send } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { RequireAuth } from "@/components/require-auth";
@@ -13,9 +14,10 @@ export const Route = createFileRoute("/messages")({
   head: () => ({
     meta: [
       { title: "Messages — ReMarket" },
-      { name: "description", content: "Chat with buyers and sellers about listings on ReMarket." },
-      { property: "og:title", content: "Messages — ReMarket" },
-      { property: "og:description", content: "Chat with buyers and sellers about listings on ReMarket." },
+      {
+        name: "description",
+        content: "Chat live with buyers and sellers about ReMarket listings.",
+      },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -26,58 +28,92 @@ export const Route = createFileRoute("/messages")({
   ),
 });
 
+type Conversation = {
+  id: string;
+  buyer_id: string;
+  seller_id: string;
+  last_message_at: string;
+  product: { title: string; images: string[] } | null;
+};
+
+type ChatMessage = { id: string; sender_id: string; body: string; created_at: string };
+
 function MessagesPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [activeId, setActiveId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
+  const [realtimeState, setRealtimeState] = useState("CONNECTING");
+  const bottomRef = useRef<HTMLDivElement>(null);
 
-  const { data: conversations = [] } = useQuery({
+  const { data: conversations = [], isLoading: conversationsLoading } = useQuery({
     queryKey: ["conversations", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("conversations")
-        .select("id, last_message_at, product:products(title, images)")
+        .select("id, buyer_id, seller_id, last_message_at, product:products(title, images)")
         .order("last_message_at", { ascending: false });
-      return data ?? [];
+      if (error) throw error;
+      return (data ?? []) as unknown as Conversation[];
     },
   });
 
-  const { data: messages = [] } = useQuery({
+  const selectedConversation = useMemo(
+    () => conversations.find((conversation) => conversation.id === activeId),
+    [activeId, conversations],
+  );
+
+  useEffect(() => {
+    if (!activeId && conversations[0]) setActiveId(conversations[0].id);
+  }, [activeId, conversations]);
+
+  const { data: messages = [], isLoading: messagesLoading } = useQuery({
     queryKey: ["messages", activeId],
     enabled: !!activeId,
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("messages")
-        .select("*")
+        .select("id, sender_id, body, created_at")
         .eq("conversation_id", activeId!)
         .order("created_at", { ascending: true });
-      return data ?? [];
+      if (error) throw error;
+      return (data ?? []) as ChatMessage[];
     },
   });
 
   useEffect(() => {
     if (!user) return;
     const channel = supabase
-      .channel("messages-live")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () => {
-        void queryClient.invalidateQueries({ queryKey: ["messages"] });
+      .channel(`inbox:${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages" },
+        (payload) => {
+          const incoming = payload.new as { conversation_id: string };
+          void queryClient.invalidateQueries({ queryKey: ["messages", incoming.conversation_id] });
+          void queryClient.invalidateQueries({ queryKey: ["conversations", user.id] });
+        },
+      )
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "conversations" }, () => {
+        void queryClient.invalidateQueries({ queryKey: ["conversations", user.id] });
       })
-      .subscribe();
+      .subscribe((status) => setRealtimeState(status));
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [user, queryClient]);
+  }, [queryClient, user]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const send = async () => {
     const body = draft.trim();
-    if (!body || !activeId) return;
-    const { error } = await supabase.from("messages").insert({
-      conversation_id: activeId,
-      sender_id: user!.id,
-      body: body.slice(0, 1000),
-    });
+    if (!body || !activeId || !user) return;
+    const { error } = await supabase
+      .from("messages")
+      .insert({ conversation_id: activeId, sender_id: user.id, body: body.slice(0, 1000) });
     if (error) {
       toast.error(error.message);
       return;
@@ -87,66 +123,143 @@ function MessagesPage() {
   };
 
   return (
-    <div className="px-4 py-10 sm:px-8">
-      <h1 className="font-display text-4xl tracking-tight">Messages</h1>
-      <div className="mt-6 grid gap-5 lg:grid-cols-3">
-        <div className="glass-panel space-y-2 rounded-3xl p-4">
-          {conversations.map((conversation) => (
-            <button
-              key={conversation.id}
-              onClick={() => setActiveId(conversation.id)}
-              className={`w-full rounded-2xl p-3 text-left text-sm transition ${
-                activeId === conversation.id ? "bg-secondary" : "hover:bg-secondary/60"
-              }`}
-            >
-              <span className="font-semibold">
-                {(conversation.product as { title?: string } | null)?.title ?? "Listing"}
-              </span>
-              <span className="block text-xs text-muted-foreground">
-                {new Date(conversation.last_message_at).toLocaleString()}
-              </span>
-            </button>
-          ))}
-          {conversations.length === 0 && <p className="p-3 text-sm text-muted-foreground">No conversations yet.</p>}
+    <div className="market-section px-4 py-8 sm:px-8">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="text-sm font-bold uppercase tracking-wider text-primary">
+            Buyer–seller inbox
+          </p>
+          <h1 className="mt-1 text-4xl font-extrabold">Messages</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Ask questions, negotiate and arrange a safe meetup.
+          </p>
         </div>
-
-        <div className="glass-panel flex min-h-[420px] flex-col rounded-3xl p-5 lg:col-span-2">
-          <div className="flex-1 space-y-3 overflow-y-auto">
+        <div
+          className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold ${realtimeState === "SUBSCRIBED" ? "bg-green-50 text-accent" : "bg-yellow-50 text-yellow-700"}`}
+        >
+          <span
+            className={`size-2 rounded-full ${realtimeState === "SUBSCRIBED" ? "bg-accent" : "bg-yellow-500"}`}
+          />
+          {realtimeState === "SUBSCRIBED" ? "Live updates on" : "Connecting…"}
+        </div>
+      </div>
+      <div className="mt-6 grid min-h-[580px] overflow-hidden rounded-2xl border border-border bg-white shadow-sm lg:grid-cols-[300px_1fr]">
+        <aside className="border-b border-border lg:border-b-0 lg:border-r">
+          <div className="flex items-center justify-between border-b border-border px-4 py-4">
+            <p className="font-bold">Conversations</p>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Refresh conversations"
+              onClick={() =>
+                void queryClient.invalidateQueries({ queryKey: ["conversations", user?.id] })
+              }
+            >
+              <RefreshCw className="size-4" />
+            </Button>
+          </div>
+          <div className="max-h-[230px] overflow-y-auto p-2 lg:max-h-[520px]">
+            {conversationsLoading && (
+              <p className="p-3 text-sm text-muted-foreground">Loading conversations…</p>
+            )}
+            {conversations.map((conversation) => (
+              <button
+                key={conversation.id}
+                onClick={() => setActiveId(conversation.id)}
+                className={`flex w-full items-center gap-3 rounded-xl p-3 text-left transition ${activeId === conversation.id ? "bg-secondary" : "hover:bg-[#f4f6f8]"}`}
+              >
+                <img
+                  src={conversation.product?.images?.[0] ?? "/images/camera.jpg"}
+                  alt=""
+                  className="size-12 rounded-lg object-cover"
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-bold">
+                    {conversation.product?.title ?? "Listing"}
+                  </span>
+                  <span className="mt-1 block text-xs text-muted-foreground">
+                    {new Date(conversation.last_message_at).toLocaleString()}
+                  </span>
+                </span>
+              </button>
+            ))}
+            {!conversationsLoading && conversations.length === 0 && (
+              <div className="p-5 text-center">
+                <MessageCircle className="mx-auto size-8 text-muted-foreground" />
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Your seller conversations will appear here.
+                </p>
+              </div>
+            )}
+          </div>
+        </aside>
+        <section className="flex min-h-[520px] flex-col">
+          <div className="border-b border-border px-5 py-4">
+            {selectedConversation ? (
+              <>
+                <p className="font-bold">
+                  {selectedConversation.product?.title ?? "Listing conversation"}
+                </p>
+                <p className="text-xs text-muted-foreground">Live chat · no online payment</p>
+              </>
+            ) : (
+              <p className="font-bold text-muted-foreground">Choose a conversation</p>
+            )}
+          </div>
+          <div className="flex-1 space-y-3 overflow-y-auto bg-[#f8fafc] p-5">
+            {messagesLoading && <p className="text-sm text-muted-foreground">Loading messages…</p>}
             {messages.map((message) => (
               <div
                 key={message.id}
-                className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm ${
-                  message.sender_id === user?.id
-                    ? "sunset-gradient ml-auto text-primary-foreground"
-                    : "bg-secondary"
-                }`}
+                className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm shadow-sm ${message.sender_id === user?.id ? "ml-auto bg-primary text-white" : "bg-white text-foreground"}`}
               >
-                {message.body}
+                <p>{message.body}</p>
+                <p
+                  className={`mt-1 text-[10px] ${message.sender_id === user?.id ? "text-blue-100" : "text-muted-foreground"}`}
+                >
+                  {new Date(message.created_at).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </p>
               </div>
             ))}
             {activeId && messages.length === 0 && (
               <p className="text-sm text-muted-foreground">Say hello to start the conversation.</p>
             )}
-            {!activeId && <p className="text-sm text-muted-foreground">Pick a conversation to read it.</p>}
+            {!activeId && (
+              <p className="text-sm text-muted-foreground">Pick a conversation to read it.</p>
+            )}
+            <div ref={bottomRef} />
           </div>
-          <div className="mt-4 flex gap-2">
-            <Input
-              value={draft}
-              maxLength={1000}
-              placeholder="Write a message…"
-              onChange={(event) => setDraft(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") void send();
-              }}
-            />
-            <Button
-              onClick={() => void send()}
-              className="sunset-gradient rounded-full border-0 text-primary-foreground"
-            >
-              Send
-            </Button>
+          <div className="border-t border-border bg-white p-4">
+            <div className="flex gap-2">
+              <Input
+                value={draft}
+                maxLength={1000}
+                disabled={!activeId}
+                placeholder={activeId ? "Write a message…" : "Select a conversation first"}
+                onChange={(event) => setDraft(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && !event.shiftKey) {
+                    event.preventDefault();
+                    void send();
+                  }
+                }}
+              />
+              <Button
+                onClick={() => void send()}
+                disabled={!activeId || !draft.trim()}
+                className="rounded-xl bg-primary"
+              >
+                <Send className="mr-2 size-4" /> Send
+              </Button>
+            </div>
+            <p className="mt-2 text-[11px] text-muted-foreground">
+              Never share payment details or send money before inspecting the item.
+            </p>
           </div>
-        </div>
+        </section>
       </div>
     </div>
   );

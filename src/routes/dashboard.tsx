@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
+import { CheckCircle2, Pencil, Trash2 } from "lucide-react";
 
 import { ProductCard } from "@/components/product-card";
 import { RequireAuth } from "@/components/require-auth";
@@ -19,9 +20,15 @@ export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
       { title: "Your account — ReMarket" },
-      { name: "description", content: "Manage your ReMarket profile, listings, favourites and notifications." },
+      {
+        name: "description",
+        content: "Manage your ReMarket profile, listings, favourites and notifications.",
+      },
       { property: "og:title", content: "Your account — ReMarket" },
-      { property: "og:description", content: "Manage your ReMarket profile, listings and favourites." },
+      {
+        property: "og:description",
+        content: "Manage your ReMarket profile, listings and favourites.",
+      },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -90,6 +97,35 @@ function Dashboard() {
     },
   });
 
+  const updateListingStatus = async (id: string, status: "approved" | "sold") => {
+    const { error } = await supabase
+      .from("products")
+      .update({ status })
+      .eq("id", id)
+      .eq("seller_id", user!.id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(status === "sold" ? "Listing marked as sold" : "Listing is live again");
+    await queryClient.invalidateQueries({ queryKey: ["my-listings", user?.id] });
+    await queryClient.invalidateQueries({ queryKey: ["products"] });
+  };
+
+  const deleteListing = async (id: string) => {
+    const { error } = await supabase
+      .from("products")
+      .delete()
+      .eq("id", id)
+      .eq("seller_id", user!.id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Listing deleted");
+    await queryClient.invalidateQueries({ queryKey: ["my-listings", user?.id] });
+  };
+
   const saveProfile = async () => {
     const parsed = profileSchema.safeParse(form);
     if (!parsed.success) {
@@ -106,7 +142,9 @@ function Dashboard() {
   };
 
   const becomeSeller = async () => {
-    const { error } = await supabase.from("user_roles").insert({ user_id: user!.id, role: "seller" });
+    const { error } = await supabase
+      .from("user_roles")
+      .insert({ user_id: user!.id, role: "seller" });
     if (error) {
       toast.error("Seller access is granted by an admin. Ask an admin to upgrade your account.");
       return;
@@ -117,7 +155,9 @@ function Dashboard() {
 
   return (
     <div className="px-4 py-10 sm:px-8">
-      <h1 className="font-display text-4xl tracking-tight">Hello, {profile?.full_name ?? "there"}</h1>
+      <h1 className="font-display text-4xl tracking-tight">
+        Hello, {profile?.full_name ?? "there"}
+      </h1>
       <p className="mt-1 text-muted-foreground">Roles: {roles.join(", ") || "buyer"}</p>
 
       <Tabs defaultValue="profile" className="mt-8">
@@ -167,7 +207,11 @@ function Dashboard() {
                 Save profile
               </Button>
               {!isSeller && (
-                <Button variant="secondary" className="rounded-full" onClick={() => void becomeSeller()}>
+                <Button
+                  variant="secondary"
+                  className="rounded-full"
+                  onClick={() => void becomeSeller()}
+                >
                   Become a seller
                 </Button>
               )}
@@ -175,23 +219,84 @@ function Dashboard() {
           </div>
         </TabsContent>
 
-        <TabsContent value="listings" className="mt-6 space-y-3">
-          <Button asChild className="sunset-gradient rounded-full border-0 text-primary-foreground">
-            <Link to="/listings/new">Post an ad</Link>
-          </Button>
+        <TabsContent value="listings" className="mt-6 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-secondary p-4">
+            <div>
+              <p className="font-bold">Manage your listings</p>
+              <p className="text-sm text-muted-foreground">
+                Edit details, hide sold items, or remove an ad.
+              </p>
+            </div>
+            <Button asChild className="rounded-xl bg-primary">
+              <Link to="/listings/new">Post an ad</Link>
+            </Button>
+          </div>
           {listings.map((listing) => (
-            <div key={listing.id} className="glass-panel flex flex-wrap items-center justify-between gap-3 rounded-3xl p-5">
-              <span className="font-display text-lg">{listing.title}</span>
-              <span className="rounded-full bg-secondary px-3 py-1 text-xs uppercase">{listing.condition}</span>
-              <span className="text-primary">{money(Number(listing.price), listing.currency)}</span>
-              <Button asChild size="sm" variant="secondary" className="rounded-full">
-                <Link to="/listings/$id/edit" params={{ id: listing.id }}>
-                  Edit
-                </Link>
-              </Button>
+            <div
+              key={listing.id}
+              className="flex flex-col gap-4 rounded-2xl border border-border bg-white p-4 shadow-sm sm:flex-row sm:items-center"
+            >
+              <img
+                src={listing.images[0] ?? "/images/camera.jpg"}
+                alt=""
+                className="size-20 rounded-xl object-cover"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-bold">{listing.title}</p>
+                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                  <span>{money(Number(listing.price), listing.currency)}</span>
+                  <span>·</span>
+                  <span>{listing.condition}</span>
+                  <span>·</span>
+                  <span
+                    className={
+                      listing.status === "sold"
+                        ? "font-bold text-muted-foreground"
+                        : "font-bold text-accent"
+                    }
+                  >
+                    {listing.status === "sold"
+                      ? "Sold"
+                      : listing.status === "approved"
+                        ? "Live"
+                        : listing.status}
+                  </span>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button asChild size="sm" variant="outline" className="rounded-lg">
+                  <Link to="/listings/$id/edit" params={{ id: listing.id }}>
+                    <Pencil className="mr-1 size-3.5" /> Edit
+                  </Link>
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="rounded-lg"
+                  onClick={() =>
+                    void updateListingStatus(
+                      listing.id,
+                      listing.status === "sold" ? "approved" : "sold",
+                    )
+                  }
+                >
+                  <CheckCircle2 className="mr-1 size-3.5" />{" "}
+                  {listing.status === "sold" ? "Relist" : "Mark sold"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="rounded-lg text-destructive hover:text-destructive"
+                  onClick={() => void deleteListing(listing.id)}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </div>
             </div>
           ))}
-          {listings.length === 0 && <p className="text-muted-foreground">You haven't listed anything yet.</p>}
+          {listings.length === 0 && (
+            <p className="text-muted-foreground">You haven't listed anything yet.</p>
+          )}
         </TabsContent>
 
         <TabsContent value="wishlist" className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">

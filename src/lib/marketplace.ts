@@ -42,7 +42,7 @@ export interface Product {
   stock: number;
   location: string;
   images: string[];
-  status: "pending" | "approved" | "rejected";
+  status: "pending" | "approved" | "rejected" | "sold";
   featured: boolean;
   views: number;
   created_at: string;
