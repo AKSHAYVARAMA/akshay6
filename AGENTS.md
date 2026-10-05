@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Listing photos are uploaded to the private `remarket-listing-photos` Storage bucket, product rows store object paths, and the UI resolves short-lived signed URLs so photos remain private to the intended listing flow.
