@@ -1,0 +1,4 @@
+CREATE POLICY "Listing photos are readable" ON storage.objects FOR SELECT TO anon, authenticated USING (bucket_id = 'remarket-listing-photos');
+CREATE POLICY "Sellers upload their own listing photos" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'remarket-listing-photos' AND (storage.foldername(name))[1] = auth.uid()::text);
+CREATE POLICY "Sellers update their own listing photos" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'remarket-listing-photos' AND (storage.foldername(name))[1] = auth.uid()::text) WITH CHECK (bucket_id = 'remarket-listing-photos' AND (storage.foldername(name))[1] = auth.uid()::text);
+CREATE POLICY "Sellers delete their own listing photos" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'remarket-listing-photos' AND (storage.foldername(name))[1] = auth.uid()::text);
