@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Bell, Heart, LayoutDashboard, LogOut, MessageCircle, Search, User } from "lucide-react";
+import { Bell, Heart, House, LayoutDashboard, LogOut, MessageCircle, Search, User } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,13 @@ export function SiteHeader() {
               Buy smart · sell fast
             </p>
           </div>
+        </Link>
+        <Link
+          to="/"
+          className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-border px-3 text-sm font-bold text-foreground hover:bg-secondary"
+          aria-label="Home — see listings"
+        >
+          <House className="size-4" /> <span>Home</span>
         </Link>
         <div className="hidden items-center gap-1 text-sm font-bold md:flex">
           <Link

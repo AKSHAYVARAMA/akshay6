@@ -4,6 +4,7 @@ import { Heart, MapPin, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { MarketplaceImage } from "@/components/marketplace-image";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { money, type Product } from "@/lib/marketplace";
@@ -31,8 +32,8 @@ export function ProductCard({ product }: { product: Product }) {
     <article className="group overflow-hidden rounded-2xl border border-border bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
       <div className="relative">
         <Link to="/product/$id" params={{ id: product.id }}>
-          <img
-            src={product.images[0] ?? "/images/camera.jpg"}
+          <MarketplaceImage
+            src={product.images[0] ?? ""}
             alt={product.title}
             loading="lazy"
             width={1024}
