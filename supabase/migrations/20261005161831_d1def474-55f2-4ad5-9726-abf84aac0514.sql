@@ -1,0 +1,1 @@
+DELETE FROM public.products WHERE seller_id IS NULL;
