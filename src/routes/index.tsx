@@ -24,6 +24,13 @@ export const Route = createFileRoute("/")({
         content:
           "Buy new, used and refurbished products near you. Chat with sellers, negotiate and meet offline.",
       },
+      { property: "og:title", content: "ReMarket — Local marketplace, real conversations" },
+      {
+        property: "og:description",
+        content: "Browse local listings, chat with sellers and arrange safe in-person deals.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Home,
