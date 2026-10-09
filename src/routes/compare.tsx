@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { MarketplaceImage } from "@/components/marketplace-image";
 import { supabase } from "@/integrations/supabase/client";
 import { money, type Product } from "@/lib/marketplace";
 
@@ -60,8 +61,8 @@ function ComparePage() {
         <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {products.map((product) => (
             <div key={product.id} className="glass-panel rounded-3xl p-5">
-              <img
-                src={product.images[0] ?? "/images/bag.jpg"}
+              <MarketplaceImage
+                src={product.images[0] ?? ""}
                 alt={product.title}
                 loading="lazy"
                 className="h-40 w-full rounded-2xl object-cover"

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { RequireAuth } from "@/components/require-auth";
+import { MarketplaceImage } from "@/components/marketplace-image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
@@ -168,8 +169,8 @@ function MessagesPage() {
                 onClick={() => setActiveId(conversation.id)}
                 className={`flex w-full items-center gap-3 rounded-xl p-3 text-left transition ${activeId === conversation.id ? "bg-secondary" : "hover:bg-[#f4f6f8]"}`}
               >
-                <img
-                  src={conversation.product?.images?.[0] ?? "/images/camera.jpg"}
+                <MarketplaceImage
+                  src={conversation.product?.images?.[0] ?? ""}
                   alt=""
                   className="size-12 rounded-lg object-cover"
                 />

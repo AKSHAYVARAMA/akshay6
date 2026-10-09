@@ -9,8 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ListingPhotoPicker } from "@/components/listing-photo-picker";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { CONDITIONS, CURRENCIES, type Condition, type Product } from "@/lib/marketplace";
+import { removeListingPhotos, uploadListingPhotos } from "@/lib/listing-photos";
 
 export const Route = createFileRoute("/listings/$id/edit")({
   head: () => ({
@@ -40,6 +43,9 @@ const editSchema = z.object({
 function EditListing() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
   const { data: product } = useQuery({
     queryKey: ["listing", id],
     queryFn: async () => {
@@ -71,6 +77,7 @@ function EditListing() {
         negotiable: product.negotiable ?? true,
         condition: product.condition,
       });
+      setExistingImages(product.images ?? []);
     }
   }, [product]);
 
@@ -86,24 +93,45 @@ function EditListing() {
       toast.error(parsed.error.issues[0]?.message ?? "Check your listing");
       return;
     }
+    if (!user) {
+      toast.error("Sign in to update this ad.");
+      return;
+    }
+    let uploadedImages: string[] = [];
+    try {
+      uploadedImages = await uploadListingPhotos(user.id, photoFiles);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Photos could not be uploaded.");
+      return;
+    }
+    const nextImages = [...existingImages, ...uploadedImages];
     const { error } = await supabase
       .from("products")
-      .update({ ...parsed.data, currency: form.currency, negotiable: form.negotiable, condition: form.condition })
-      .eq("id", id);
+      .update({ ...parsed.data, currency: form.currency, negotiable: form.negotiable, condition: form.condition, images: nextImages })
+      .eq("id", id)
+      .eq("seller_id", user.id);
     if (error) {
+      await removeListingPhotos(user.id, uploadedImages).catch(() => undefined);
       toast.error(error.message);
       return;
     }
+    const removedImages = (product?.images ?? []).filter((image) => !nextImages.includes(image));
+    await removeListingPhotos(user.id, removedImages).catch(() => undefined);
     toast.success("Ad updated");
     void navigate({ to: "/dashboard" });
   };
 
   const remove = async () => {
-    const { error } = await supabase.from("products").delete().eq("id", id);
+    if (!user) {
+      toast.error("Sign in to delete this ad.");
+      return;
+    }
+    const { error } = await supabase.from("products").delete().eq("id", id).eq("seller_id", user.id);
     if (error) {
       toast.error(error.message);
       return;
     }
+    await removeListingPhotos(user.id, product?.images ?? []).catch(() => undefined);
     toast.success("Ad deleted");
     void navigate({ to: "/dashboard" });
   };
@@ -191,6 +219,7 @@ function EditListing() {
             ))}
           </div>
         </div>
+        <ListingPhotoPicker images={existingImages} onImagesChange={setExistingImages} files={photoFiles} onFilesChange={setPhotoFiles} />
         <div className="flex gap-2">
           {[
             { label: "Negotiable", value: true },
