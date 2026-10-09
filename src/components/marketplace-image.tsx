@@ -33,7 +33,13 @@ export function MarketplaceImage({
   });
 
   const imageUrl = isDirectUrl ? src : signedUrl;
-  if (!imageUrl) return <div className={className} role="img" aria-label={alt} />;
+  if (!imageUrl) {
+    return (
+      <div className={`${className ?? ""} grid place-items-center bg-muted text-xs text-muted-foreground`} role="img" aria-label={alt}>
+        {alt ? "Photo unavailable" : ""}
+      </div>
+    );
+  }
 
   return (
     <img
