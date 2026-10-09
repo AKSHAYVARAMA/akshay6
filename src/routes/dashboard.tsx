@@ -6,6 +6,7 @@ import { z } from "zod";
 import { CheckCircle2, Pencil, Trash2 } from "lucide-react";
 
 import { ProductCard } from "@/components/product-card";
+import { MarketplaceImage } from "@/components/marketplace-image";
 import { RequireAuth } from "@/components/require-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -236,8 +237,8 @@ function Dashboard() {
               key={listing.id}
               className="flex flex-col gap-4 rounded-2xl border border-border bg-white p-4 shadow-sm sm:flex-row sm:items-center"
             >
-              <img
-                src={listing.images[0] ?? "/images/camera.jpg"}
+              <MarketplaceImage
+                src={listing.images[0] ?? ""}
                 alt=""
                 className="size-20 rounded-xl object-cover"
               />

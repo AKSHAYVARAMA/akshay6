@@ -5,6 +5,7 @@ import { Flag, Heart, MapPin, MessageCircle, Scale } from "lucide-react";
 import { toast } from "sonner";
 
 import { ProductCard } from "@/components/product-card";
+import { MarketplaceImage } from "@/components/marketplace-image";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/useAuth";
@@ -187,8 +188,8 @@ function ProductPage() {
       <div className="grid gap-8 lg:grid-cols-12">
         <div className="lg:col-span-7">
           <div className="glass-panel rounded-3xl p-3">
-            <img
-              src={product.images[0] ?? "/images/camera.jpg"}
+            <MarketplaceImage
+              src={product.images[0] ?? ""}
               alt={product.title}
               width={1024}
               height={1024}
@@ -197,7 +198,7 @@ function ProductPage() {
             {product.images.length > 1 && (
               <div className="mt-3 grid grid-cols-4 gap-2">
                 {product.images.slice(0, 4).map((image) => (
-                  <img
+                  <MarketplaceImage
                     key={image}
                     src={image}
                     alt={product.title}

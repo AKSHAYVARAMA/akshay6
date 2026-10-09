@@ -12,7 +12,6 @@ import {
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { MarketplaceImage } from "@/components/marketplace-image";
 import { ProductCard } from "@/components/product-card";
 import { fetchCategories, fetchProducts, type Condition } from "@/lib/marketplace";
 

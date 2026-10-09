@@ -46,9 +46,11 @@ export function ListingPhotoPicker({
           aria-label="Choose listing photos"
           onChange={(event) => {
             const chosen = Array.from(event.target.files ?? []);
+            const notImages = chosen.filter((file) => !file.type.startsWith("image/"));
+            if (notImages.length) toast.error("Choose image files only.");
             const tooLarge = chosen.filter((file) => file.size > MAX_LISTING_PHOTO_SIZE);
             if (tooLarge.length) toast.error("Each photo must be 15 MB or smaller.");
-            const valid = chosen.filter((file) => file.size <= MAX_LISTING_PHOTO_SIZE);
+            const valid = chosen.filter((file) => file.type.startsWith("image/") && file.size <= MAX_LISTING_PHOTO_SIZE);
             if (valid.length > remaining) toast.error("You can add up to 6 photos.");
             onFilesChange([...files, ...valid.slice(0, remaining)]);
             event.target.value = "";
