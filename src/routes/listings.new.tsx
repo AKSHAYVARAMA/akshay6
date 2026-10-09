@@ -9,9 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ListingPhotoPicker } from "@/components/listing-photo-picker";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { CONDITIONS, CURRENCIES, fetchCategories, type Condition } from "@/lib/marketplace";
+import { removeListingPhotos, uploadListingPhotos } from "@/lib/listing-photos";
 
 export const Route = createFileRoute("/listings/new")({
   head: () => ({
@@ -42,6 +44,7 @@ function NewListing() {
   const navigate = useNavigate();
   const { data: categories = [] } = useQuery({ queryKey: ["categories"], queryFn: fetchCategories });
   const [busy, setBusy] = useState(false);
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -52,7 +55,6 @@ function NewListing() {
     negotiable: true,
     condition: "used" as Condition,
     categoryId: "",
-    images: "",
   });
 
   const submit = async () => {
@@ -67,14 +69,25 @@ function NewListing() {
       toast.error(parsed.error.issues[0]?.message ?? "Check your listing");
       return;
     }
+    if (!user) {
+      toast.error("Sign in to post an ad.");
+      return;
+    }
+    if (photoFiles.length === 0) {
+      toast.error("Add at least one photo of your item.");
+      return;
+    }
     setBusy(true);
-    const images = form.images
-      .split(/[\n,]/)
-      .map((url) => url.trim())
-      .filter(Boolean)
-      .slice(0, 6);
+    let uploadedImages: string[] = [];
+    try {
+      uploadedImages = await uploadListingPhotos(user.id, photoFiles);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Photos could not be uploaded.");
+      setBusy(false);
+      return;
+    }
     const { error } = await supabase.from("products").insert({
-      seller_id: user!.id,
+      seller_id: user.id,
       seller_name: profile?.store_name || profile?.full_name || "ReMarket seller",
       title: parsed.data.title,
       description: parsed.data.description,
@@ -85,11 +98,12 @@ function NewListing() {
       location: parsed.data.location,
       condition: form.condition,
       category_id: form.categoryId || null,
-      images: images.length ? images : ["/images/bag.jpg"],
+      images: uploadedImages,
       status: "approved",
     });
     setBusy(false);
     if (error) {
+      await removeListingPhotos(user.id, uploadedImages).catch(() => undefined);
       toast.error(error.message);
       return;
     }
@@ -217,17 +231,9 @@ function NewListing() {
             </Button>
           ))}
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="images">Photo URLs (one per line)</Label>
-          <Textarea
-            id="images"
-            rows={3}
-            value={form.images}
-            onChange={(event) => setForm({ ...form, images: event.target.value })}
-          />
-        </div>
+        <ListingPhotoPicker images={[]} onImagesChange={() => undefined} files={photoFiles} onFilesChange={setPhotoFiles} />
         <Button
-          disabled={busy}
+          disabled={busy || photoFiles.length === 0}
           onClick={() => void submit()}
           className="sunset-gradient w-full rounded-full border-0 text-primary-foreground"
         >

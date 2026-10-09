@@ -12,6 +12,7 @@ import {
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { MarketplaceImage } from "@/components/marketplace-image";
 import { ProductCard } from "@/components/product-card";
 import { fetchCategories, fetchProducts, type Condition } from "@/lib/marketplace";
 
@@ -217,7 +218,7 @@ function Home() {
             View all <ArrowRight className="size-4" />
           </Link>
         </div>
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {featured.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}

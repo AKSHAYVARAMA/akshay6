@@ -37,7 +37,7 @@ export function ListingPhotoPicker({
           <p className="text-sm font-semibold">Photos</p>
           <p className="text-xs text-muted-foreground">Up to 6 photos · 15 MB each</p>
         </div>
-        <input
+          <input
           ref={inputRef}
           type="file"
           accept="image/*"
