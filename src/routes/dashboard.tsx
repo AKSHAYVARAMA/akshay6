@@ -30,6 +30,8 @@ export const Route = createFileRoute("/dashboard")({
         property: "og:description",
         content: "Manage your ReMarket profile, listings and favourites.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),

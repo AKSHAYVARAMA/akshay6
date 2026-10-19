@@ -15,9 +15,11 @@ export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
       { title: "Sign in or create an account — ReMarket" },
-      { name: "description", content: "Sign in to ReMarket to buy, sell, message sellers and track your orders." },
+      { name: "description", content: "Sign in to ReMarket to post listings, save favourites and chat with buyers and sellers." },
       { property: "og:title", content: "Sign in to ReMarket" },
       { property: "og:description", content: "Create a free ReMarket account to buy and sell new and used products." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: AuthPage,

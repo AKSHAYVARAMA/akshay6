@@ -10,9 +10,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ListingPhotoPicker } from "@/components/listing-photo-picker";
+import { LocationButton } from "@/components/location-button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { CONDITIONS, CURRENCIES, fetchCategories, type Condition } from "@/lib/marketplace";
+import { roundCoordinates, type Coordinates } from "@/lib/geolocation";
 import { removeListingPhotos, uploadListingPhotos } from "@/lib/listing-photos";
 
 export const Route = createFileRoute("/listings/new")({
@@ -22,6 +24,8 @@ export const Route = createFileRoute("/listings/new")({
       { name: "description", content: "Post a free ad on ReMarket and sell new, used or refurbished items fast." },
       { property: "og:title", content: "Post an ad — ReMarket" },
       { property: "og:description", content: "Post a free ad and sell new, used or refurbished items fast." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: () => (
@@ -45,6 +49,7 @@ function NewListing() {
   const { data: categories = [] } = useQuery({ queryKey: ["categories"], queryFn: fetchCategories });
   const [busy, setBusy] = useState(false);
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -96,6 +101,8 @@ function NewListing() {
       item_age: parsed.data.item_age,
       negotiable: form.negotiable,
       location: parsed.data.location,
+      location_latitude: coordinates ? roundCoordinates(coordinates).latitude : null,
+      location_longitude: coordinates ? roundCoordinates(coordinates).longitude : null,
       condition: form.condition,
       category_id: form.categoryId || null,
       images: uploadedImages,
@@ -232,6 +239,7 @@ function NewListing() {
           ))}
         </div>
         <ListingPhotoPicker images={[]} onImagesChange={() => undefined} files={photoFiles} onFilesChange={setPhotoFiles} />
+        <LocationButton mode="listing" coordinates={coordinates} onCoordinates={setCoordinates} />
         <Button
           disabled={busy || photoFiles.length === 0}
           onClick={() => void submit()}

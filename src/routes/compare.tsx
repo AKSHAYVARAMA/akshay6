@@ -14,6 +14,8 @@ export const Route = createFileRoute("/compare")({
       { name: "description", content: "Compare price, condition, age and location side by side on ReMarket." },
       { property: "og:title", content: "Compare listings — ReMarket" },
       { property: "og:description", content: "Compare price, condition, age and location side by side." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: ComparePage,

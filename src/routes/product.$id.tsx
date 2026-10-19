@@ -19,6 +19,8 @@ export const Route = createFileRoute("/product/$id")({
       { name: "description", content: "View photos, price, condition and seller details for this ReMarket listing." },
       { property: "og:title", content: "Listing details — ReMarket" },
       { property: "og:description", content: "View photos, price, condition and seller details for this listing." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: ProductPage,

@@ -17,6 +17,8 @@ export const Route = createFileRoute("/admin")({
       { name: "description", content: "Moderate listings, review reports, manage members and categories on ReMarket." },
       { property: "og:title", content: "Admin panel — ReMarket" },
       { property: "og:description", content: "Moderate listings, review reports, manage members and categories." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),

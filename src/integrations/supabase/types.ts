@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -145,6 +145,8 @@ export type Database = {
           images: string[]
           item_age: string
           location: string
+          location_latitude: number | null
+          location_longitude: number | null
           negotiable: boolean
           price: number
           seller_id: string | null
@@ -167,6 +169,8 @@ export type Database = {
           images?: string[]
           item_age?: string
           location?: string
+          location_latitude?: number | null
+          location_longitude?: number | null
           negotiable?: boolean
           price: number
           seller_id?: string | null
@@ -189,6 +193,8 @@ export type Database = {
           images?: string[]
           item_age?: string
           location?: string
+          location_latitude?: number | null
+          location_longitude?: number | null
           negotiable?: boolean
           price?: number
           seller_id?: string | null
@@ -419,7 +425,7 @@ export type Database = {
     Enums: {
       app_role: "buyer" | "seller" | "admin"
       product_condition: "new" | "used" | "refurbished"
-      product_status: "pending" | "approved" | "rejected"
+      product_status: "pending" | "approved" | "rejected" | "sold"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -549,7 +555,7 @@ export const Constants = {
     Enums: {
       app_role: ["buyer", "seller", "admin"],
       product_condition: ["new", "used", "refurbished"],
-      product_status: ["pending", "approved", "rejected"],
+      product_status: ["pending", "approved", "rejected", "sold"],
     },
   },
 } as const

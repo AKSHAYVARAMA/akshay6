@@ -1,0 +1,1 @@
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS location_latitude double precision; ALTER TABLE public.products ADD COLUMN IF NOT EXISTS location_longitude double precision;

@@ -11,8 +11,11 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
+import { LocationButton } from "@/components/location-button";
 import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/product-card";
+import { sortProductsByDistance } from "@/lib/geolocation";
+import type { Coordinates } from "@/lib/geolocation";
 import { fetchCategories, fetchProducts, type Condition } from "@/lib/marketplace";
 
 export const Route = createFileRoute("/")({
@@ -47,13 +50,14 @@ function Home() {
   const navigate = useNavigate();
   const [term, setTerm] = useState("");
   const [condition, setCondition] = useState<Condition | null>(null);
+  const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
   const { data: featured = [] } = useQuery({
     queryKey: ["products", "featured"],
     queryFn: () => fetchProducts({ featured: true, limit: 4 }),
   });
   const { data: latest = [] } = useQuery({
     queryKey: ["products", "latest"],
-    queryFn: () => fetchProducts({ limit: 8 }),
+    queryFn: () => fetchProducts({ limit: 40 }),
   });
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
@@ -64,6 +68,7 @@ function Home() {
       to: "/browse",
       search: { q: term || undefined, condition: condition ?? undefined },
     });
+  const displayedLatest = coordinates ? sortProductsByDistance(latest, coordinates).slice(0, 8) : latest.slice(0, 8);
 
   return (
     <>
@@ -298,15 +303,21 @@ function Home() {
       </section>
 
       <section className="market-section px-4 py-12 sm:px-8">
-        <div className="mb-6">
-          <p className="text-sm font-bold uppercase tracking-wider text-primary">Just posted</p>
-          <h2 className="mt-1 text-3xl font-extrabold">Latest listings</h2>
+        <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-sm font-bold uppercase tracking-wider text-primary">{coordinates ? "Around you" : "Just posted"}</p>
+            <h2 className="mt-1 text-3xl font-extrabold">{coordinates ? "Listings near you" : "Latest listings"}</h2>
+          </div>
+          <LocationButton mode="nearby" coordinates={coordinates} onCoordinates={setCoordinates} />
         </div>
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {latest.map((product) => (
-            <ProductCard key={product.id} product={product} />
+          {displayedLatest.map((product) => (
+            <ProductCard key={product.id} product={product} origin={coordinates} />
           ))}
         </div>
+        {coordinates && latest.length === 0 && (
+          <p className="mt-8 text-center text-muted-foreground">No listings nearby yet. Try browsing all listings.</p>
+        )}
       </section>
     </>
   );

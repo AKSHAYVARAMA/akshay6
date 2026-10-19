@@ -11,9 +11,11 @@ export const Route = createFileRoute("/notifications")({
   head: () => ({
     meta: [
       { title: "Notifications — ReMarket" },
-      { name: "description", content: "Order updates, messages and listing activity from ReMarket." },
+      { name: "description", content: "Messages and listing activity from ReMarket." },
       { property: "og:title", content: "Notifications — ReMarket" },
-      { property: "og:description", content: "Order updates, messages and listing activity from ReMarket." },
+      { property: "og:description", content: "Messages and listing activity from ReMarket." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),
