@@ -14,6 +14,8 @@ export const Route = createFileRoute("/seller")({
       { name: "description", content: "Track your listings, views and buyer conversations on ReMarket." },
       { property: "og:title", content: "Seller dashboard — ReMarket" },
       { property: "og:description", content: "Track your listings, views and buyer conversations on ReMarket." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),

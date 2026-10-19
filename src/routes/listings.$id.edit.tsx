@@ -22,6 +22,8 @@ export const Route = createFileRoute("/listings/$id/edit")({
       { name: "description", content: "Update the price, description, condition and location of your ReMarket ad." },
       { property: "og:title", content: "Edit ad — ReMarket" },
       { property: "og:description", content: "Update the price, description, condition and location of your ad." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),

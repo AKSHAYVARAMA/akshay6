@@ -14,6 +14,8 @@ export const Route = createFileRoute("/wishlist")({
       { name: "description", content: "Every listing you've saved on ReMarket, in one place." },
       { property: "og:title", content: "Your wishlist — ReMarket" },
       { property: "og:description", content: "Every listing you've saved on ReMarket, in one place." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),

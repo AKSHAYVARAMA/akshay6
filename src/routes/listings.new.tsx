@@ -22,6 +22,8 @@ export const Route = createFileRoute("/listings/new")({
       { name: "description", content: "Post a free ad on ReMarket and sell new, used or refurbished items fast." },
       { property: "og:title", content: "Post an ad — ReMarket" },
       { property: "og:description", content: "Post a free ad and sell new, used or refurbished items fast." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: () => (

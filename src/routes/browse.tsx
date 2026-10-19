@@ -31,6 +31,8 @@ export const Route = createFileRoute("/browse")({
         property: "og:description",
         content: "Filter new, used and refurbished listings by category, condition, price and location.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Browse,
