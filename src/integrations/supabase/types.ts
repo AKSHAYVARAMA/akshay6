@@ -145,6 +145,8 @@ export type Database = {
           images: string[]
           item_age: string
           location: string
+          location_latitude: number | null
+          location_longitude: number | null
           negotiable: boolean
           price: number
           seller_id: string | null
@@ -167,6 +169,8 @@ export type Database = {
           images?: string[]
           item_age?: string
           location?: string
+          location_latitude?: number | null
+          location_longitude?: number | null
           negotiable?: boolean
           price: number
           seller_id?: string | null
@@ -189,6 +193,8 @@ export type Database = {
           images?: string[]
           item_age?: string
           location?: string
+          location_latitude?: number | null
+          location_longitude?: number | null
           negotiable?: boolean
           price?: number
           seller_id?: string | null

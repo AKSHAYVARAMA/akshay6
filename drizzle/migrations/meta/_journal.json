@@ -8,6 +8,13 @@
       "when": 1792422518070,
       "tag": "0000_add_sold_product_status",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792422683933,
+      "tag": "0001_add_listing_coordinates",
+      "breakpoints": true
     }
   ]
 }
