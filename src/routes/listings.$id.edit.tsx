@@ -10,9 +10,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ListingPhotoPicker } from "@/components/listing-photo-picker";
+import { LocationButton } from "@/components/location-button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { CONDITIONS, CURRENCIES, type Condition, type Product } from "@/lib/marketplace";
+import { roundCoordinates, type Coordinates } from "@/lib/geolocation";
 import { removeListingPhotos, uploadListingPhotos } from "@/lib/listing-photos";
 
 export const Route = createFileRoute("/listings/$id/edit")({
@@ -48,6 +50,7 @@ function EditListing() {
   const { user } = useAuth();
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
   const { data: product } = useQuery({
     queryKey: ["listing", id],
     queryFn: async () => {
@@ -80,6 +83,11 @@ function EditListing() {
         condition: product.condition,
       });
       setExistingImages(product.images ?? []);
+      setCoordinates(
+        product.location_latitude != null && product.location_longitude != null
+          ? { latitude: product.location_latitude, longitude: product.location_longitude }
+          : null,
+      );
     }
   }, [product]);
 
@@ -109,7 +117,15 @@ function EditListing() {
     const nextImages = [...existingImages, ...uploadedImages];
     const { error } = await supabase
       .from("products")
-      .update({ ...parsed.data, currency: form.currency, negotiable: form.negotiable, condition: form.condition, images: nextImages })
+      .update({
+        ...parsed.data,
+        currency: form.currency,
+        negotiable: form.negotiable,
+        condition: form.condition,
+        images: nextImages,
+        location_latitude: coordinates ? roundCoordinates(coordinates).latitude : null,
+        location_longitude: coordinates ? roundCoordinates(coordinates).longitude : null,
+      })
       .eq("id", id)
       .eq("seller_id", user.id);
     if (error) {
@@ -222,6 +238,7 @@ function EditListing() {
           </div>
         </div>
         <ListingPhotoPicker images={existingImages} onImagesChange={setExistingImages} files={photoFiles} onFilesChange={setPhotoFiles} />
+        <LocationButton mode="listing" coordinates={coordinates} onCoordinates={setCoordinates} />
         <div className="flex gap-2">
           {[
             { label: "Negotiable", value: true },

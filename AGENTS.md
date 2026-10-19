@@ -10,3 +10,4 @@
 <!-- LOVABLE:END -->
 
 - Listing photos are uploaded to the private `remarket-listing-photos` Storage bucket, product rows store object paths, and the UI resolves short-lived signed URLs so photos remain private to the intended listing flow.
+- Nearby browsing reads buyer geolocation only after a user action and keeps it in browser state; seller ad coordinates are optional and rounded before saving to protect precise location privacy.

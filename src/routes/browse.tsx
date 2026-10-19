@@ -1,8 +1,13 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { z } from "zod";
 
+import { LocationButton } from "@/components/location-button";
 import { ProductCard } from "@/components/product-card";
+import { sortProductsByDistance } from "@/lib/geolocation";
+import type { Coordinates } from "@/lib/geolocation";
+import { Button } from "@/components/ui/button";
 import { CONDITIONS, CURRENCIES, fetchCategories, fetchProducts } from "@/lib/marketplace";
 
 const searchSchema = z.object({
@@ -43,6 +48,7 @@ const inputClass = "rounded-full border border-border bg-input px-4 py-2 text-sm
 function Browse() {
   const search = Route.useSearch();
   const navigate = useNavigate({ from: "/browse" });
+  const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
   const { data: categories = [] } = useQuery({ queryKey: ["categories"], queryFn: fetchCategories });
 
   const categoryId = categories.find((category) => category.slug === search.category)?.id ?? null;
@@ -64,6 +70,7 @@ function Browse() {
 
   const update = (patch: Partial<z.infer<typeof searchSchema>>) =>
     void navigate({ search: (prev) => ({ ...prev, ...patch }) });
+  const displayedProducts = coordinates ? sortProductsByDistance(products, coordinates) : products;
 
   return (
     <div className="px-4 py-10 sm:px-8">
@@ -158,9 +165,23 @@ function Browse() {
         </select>
       </div>
 
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <LocationButton mode="nearby" coordinates={coordinates} onCoordinates={setCoordinates} />
+        {coordinates && (
+          <>
+            <p className="text-sm text-muted-foreground">
+              Sorted by distance. Your location stays in this browser.
+            </p>
+            <Button type="button" variant="ghost" onClick={() => setCoordinates(null)}>
+              Clear nearby sorting
+            </Button>
+          </>
+        )}
+      </div>
+
       <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
+        {displayedProducts.map((product) => (
+          <ProductCard key={product.id} product={product} origin={coordinates} />
         ))}
       </div>
       {!isLoading && products.length === 0 && (

@@ -7,9 +7,16 @@ import { Button } from "@/components/ui/button";
 import { MarketplaceImage } from "@/components/marketplace-image";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { distanceToProductKm } from "@/lib/geolocation";
 import { money, type Product } from "@/lib/marketplace";
 
-export function ProductCard({ product }: { product: Product }) {
+export function ProductCard({
+  product,
+  origin,
+}: {
+  product: Product;
+  origin?: { latitude: number; longitude: number } | null;
+}) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const saveItem = useMutation({
@@ -60,6 +67,9 @@ export function ProductCard({ product }: { product: Product }) {
         </Link>
         <p className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
           <MapPin className="size-3" /> {product.location || "Location not set"}
+          {origin && distanceToProductKm(origin, product) != null && (
+            <span>· {distanceToProductKm(origin, product)?.toFixed(1)} km away</span>
+          )}
         </p>
         <div className="mt-4 flex items-end justify-between gap-2">
           <div>
