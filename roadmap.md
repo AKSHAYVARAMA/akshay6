@@ -1,5 +1,6 @@
 # ReMarket task roadmap
 
-- [ ] Finish and verify direct mobile photo uploads, sample-ad removal, and Home navigation.
-- [ ] Add opt-in location access to show nearby listings, with a useful fallback when location is unavailable or denied.
-- [ ] Confirm final app checks and current build status.
+- [ ] Persist a notification for the other participant whenever a chat message arrives; show real-time inbox updates and browser alerts while the app is open.
+- [ ] Add a natural-language marketplace search that uses Lovable AI Gateway to match public listings.
+- [ ] Verify the notification and AI search flows and review build diagnostics.
+- [ ] Revisit earlier unfinished location/photo-upload verification when project capacity allows.
